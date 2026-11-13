@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-label="Imagen de ejemplo">
+<rect width="500" height="500" fill="#f1f1f1"/>
+<path d="M120 120 L380 120 L410 360 L275 372 L250 230 L225 372 L90 360 Z" fill="#161616" stroke="#111" stroke-opacity=".18" stroke-width="3"/>
+<rect x="120" y="120" width="260" height="26" fill="#bdbdbd"/>
+<text x="250" y="485" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#999" letter-spacing="2">IMAGEN DE EJEMPLO</text>
+</svg>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-label="Imagen de ejemplo">
+<rect width="500" height="500" fill="#f1f1f1"/>
+<defs><clipPath id="c"><path d="M150 70 L205 50 Q250 85 295 50 L350 70 L440 130 L400 205 L355 180 L355 440 Q250 455 145 440 L145 180 L100 205 L60 130 Z"/></clipPath></defs>
+<path d="M150 70 L205 50 Q250 85 295 50 L350 70 L440 130 L400 205 L355 180 L355 440 Q250 455 145 440 L145 180 L100 205 L60 130 Z" fill="#1d2b4f"/>
+<g clip-path="url(#c)"><rect x="40" y="215" width="420" height="62" fill="#ffffff"/></g>
+<path d="M205 50 Q250 85 295 50 L283 44 Q250 68 217 44 Z" fill="#ffffff"/>
+<path d="M150 70 L205 50 Q250 85 295 50 L350 70 L440 130 L400 205 L355 180 L355 440 Q250 455 145 440 L145 180 L100 205 L60 130 Z" fill="none" stroke="#111" stroke-opacity=".18" stroke-width="3"/>
+<text x="250" y="485" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#999" letter-spacing="2">IMAGEN DE EJEMPLO</text>
+</svg>

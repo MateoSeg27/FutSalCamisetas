@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FutSal Camisetas | Camisetas de fútbol y ropa deportiva en Salta</title>
+  <meta name="description" content="FutSal Camisetas: camisetas de fútbol y ropa deportiva en Salta Capital. Elegí tu talle y hacé tu pedido por WhatsApp.">
+  <meta name="theme-color" content="#0d0d0d">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/img/icono.png">
+  <link rel="stylesheet" href="/css/estilos.css">
+</head>
+<body>
+
+<header class="cabecera">
+  <div class="contenedor">
+    <a class="marca" href="/" aria-label="FutSal Camisetas, inicio">
+      <img src="/img/logo.png" alt="" width="51" height="38">
+      <span>FutSal <b>Camisetas</b></span>
+    </a>
+    <nav class="nav" aria-label="Principal">
+      <a href="#catalogo">Catálogo</a>
+      <a href="#contacto">Contacto</a>
+      <button class="btn-icono" id="abrir-carrito" type="button" aria-label="Abrir carrito">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l1 13H5L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+        <span class="contador" id="contador-carrito" hidden>0</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="portada">
+    <div class="contenedor">
+      <div>
+        <h1 id="hero-titulo">Camisetas de fútbol y ropa deportiva</h1>
+        <p id="hero-texto">Elegí tu camiseta, tu talle y hacé el pedido por WhatsApp.</p>
+        <a class="btn btn-claro" href="#catalogo">Ver catálogo</a>
+      </div>
+      <img class="portada-logo" src="/img/logo.png" alt="" width="480" height="359">
+    </div>
+  </section>
+
+  <section class="seccion" id="catalogo">
+    <div class="contenedor">
+      <h2 class="titulo-seccion">Catálogo</h2>
+      <p class="subtitulo" id="texto-envios"></p>
+
+      <div class="filtros">
+        <div class="buscar">
+          <label class="oculto-visual" for="buscar">Buscar productos</label>
+          <input type="search" id="buscar" placeholder="Buscar por nombre..." autocomplete="off">
+        </div>
+        <label class="oculto-visual" for="orden">Ordenar</label>
+        <select id="orden">
+          <option value="destacados">Destacados primero</option>
+          <option value="nuevos">Más nuevos</option>
+          <option value="menor">Menor precio</option>
+          <option value="mayor">Mayor precio</option>
+        </select>
+      </div>
+      <div class="chips" id="categorias" role="group" aria-label="Categorías"></div>
+
+      <div class="grilla" id="grilla" aria-live="polite"></div>
+      <p class="vacio" id="sin-resultados" hidden>No encontramos productos con esa búsqueda.</p>
+    </div>
+  </section>
+
+  <section class="seccion seccion-gris" id="contacto">
+    <div class="contenedor">
+      <h2 class="titulo-seccion">Contacto</h2>
+      <p class="subtitulo">¿Buscás una camiseta que no está en el catálogo? Escribinos.</p>
+      <div class="contacto">
+        <form id="form-contacto" novalidate>
+          <div class="aviso" id="contacto-aviso" role="status" hidden></div>
+          <div class="campo">
+            <label for="c-nombre">Nombre</label>
+            <input type="text" id="c-nombre" maxlength="80" required autocomplete="name">
+          </div>
+          <div class="campo">
+            <label for="c-contacto">Teléfono o email</label>
+            <input type="text" id="c-contacto" maxlength="120" required>
+            <small>Para poder responderte.</small>
+          </div>
+          <div class="campo">
+            <label for="c-mensaje">Mensaje</label>
+            <textarea id="c-mensaje" maxlength="2000" required></textarea>
+          </div>
+          <div class="trampa" aria-hidden="true">
+            <label for="c-sitio">No completar</label>
+            <input type="text" id="c-sitio" tabindex="-1" autocomplete="off">
+          </div>
+          <button class="btn" type="submit" id="c-enviar">Enviar mensaje</button>
+        </form>
+
+        <ul class="datos">
+          <li id="dato-whatsapp" hidden><span>WhatsApp</span><a id="link-whatsapp" href="#" target="_blank" rel="noopener">Escribinos por WhatsApp</a></li>
+          <li id="dato-instagram" hidden><span>Instagram</span><a id="link-instagram" href="#" target="_blank" rel="noopener"></a></li>
+          <li id="dato-direccion" hidden><span>Dónde estamos</span><p id="txt-direccion"></p></li>
+          <li id="dato-horario" hidden><span>Horarios</span><p id="txt-horario"></p></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="pie">
+  <div class="contenedor">
+    <p>© <span id="anio"></span> FutSal Camisetas · Salta, Argentina</p>
+    <a href="/admin">Acceso dueño</a>
+  </div>
+</footer>
+
+<a class="wa-flotante" id="wa-flotante" href="#" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 21l2.1-5.2A8.5 8.5 0 1 1 21 11.5z"/><path d="M8.5 11.5h.01M12 11.5h.01M15.5 11.5h.01"/></svg>
+</a>
+
+<!-- Detalle de producto -->
+<dialog id="dlg-producto" aria-labelledby="p-nombre">
+  <div class="dialogo-cab">
+    <h2>Producto</h2>
+    <button class="btn-icono" type="button" data-cerrar aria-label="Cerrar">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="dialogo-cuerpo">
+    <div class="producto-detalle">
+      <div class="foto"><img id="p-imagen" src="/img/sin-imagen.svg" alt=""></div>
+      <div>
+        <p class="tarjeta-cat" id="p-categoria"></p>
+        <h3 id="p-nombre"></h3>
+        <p class="precio" id="p-precio"></p>
+        <p class="desc" id="p-descripcion"></p>
+        <p class="etiqueta" id="p-talles-titulo">Talle</p>
+        <div class="talles" id="p-talles" role="group" aria-labelledby="p-talles-titulo"></div>
+        <div class="fila-agregar">
+          <div class="cantidad" aria-label="Cantidad">
+            <button type="button" id="p-menos" aria-label="Quitar uno">−</button>
+            <span id="p-cantidad" aria-live="polite">1</span>
+            <button type="button" id="p-mas" aria-label="Agregar uno">+</button>
+          </div>
+          <button class="btn" type="button" id="p-agregar">Agregar al carrito</button>
+        </div>
+        <p class="nota" id="p-nota"></p>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- Carrito -->
+<div class="velo" id="velo" hidden></div>
+<aside class="carrito" id="carrito" aria-label="Carrito" aria-hidden="true">
+  <div class="dialogo-cab">
+    <h2>Tu pedido</h2>
+    <button class="btn-icono" type="button" id="cerrar-carrito" aria-label="Cerrar carrito">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="carrito-cuerpo">
+    <p class="vacio" id="carrito-vacio">Todavía no agregaste productos.</p>
+    <div id="carrito-items"></div>
+    <form id="form-pedido" hidden novalidate>
+      <div class="campo" style="margin-top:18px">
+        <label for="ped-nombre">Tu nombre</label>
+        <input type="text" id="ped-nombre" maxlength="80" autocomplete="name" required>
+      </div>
+      <p class="etiqueta" style="margin-bottom:8px">Entrega</p>
+      <div class="radios">
+        <label><input type="radio" name="entrega" value="retiro" checked> Retiro en Salta Capital</label>
+        <label><input type="radio" name="entrega" value="envio"> Envío</label>
+      </div>
+      <div class="campo" id="campo-direccion" hidden>
+        <label for="ped-direccion">Dirección y localidad</label>
+        <input type="text" id="ped-direccion" maxlength="200" autocomplete="street-address">
+      </div>
+      <div class="campo">
+        <label for="ped-nota">Aclaraciones (opcional)</label>
+        <input type="text" id="ped-nota" maxlength="300">
+      </div>
+    </form>
+  </div>
+  <div class="carrito-pie" id="carrito-pie" hidden>
+    <div class="aviso aviso-error" id="pedido-error" role="alert" hidden></div>
+    <div class="total"><span>Total</span><span id="carrito-total">$ 0</span></div>
+    <button class="btn btn-ancho" type="button" id="enviar-pedido">Enviar pedido por WhatsApp</button>
+    <p class="nota">Se abre WhatsApp con tu pedido armado. El pago y la entrega se coordinan por ahí.</p>
+  </div>
+</aside>
+
+<div class="tostada" id="tostada" role="status" hidden></div>
+
+<script src="/js/tienda.js"></script>
+</body>
+</html>

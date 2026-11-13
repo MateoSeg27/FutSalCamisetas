@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel | FutSal Camisetas</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0d0d0d">
+  <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/css/estilos.css">
+</head>
+<body class="panel-body">
+
+<!-- Inicio de sesion -->
+<div class="login" id="vista-login" hidden>
+  <form class="login-caja" id="form-login" novalidate>
+    <img src="/img/logo-negro.png" alt="" width="86" height="64">
+    <h1>Panel FutSal Camisetas</h1>
+    <div class="aviso aviso-error" id="login-error" role="alert" hidden></div>
+    <div class="campo">
+      <label for="l-usuario">Usuario</label>
+      <input type="text" id="l-usuario" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+    </div>
+    <div class="campo">
+      <label for="l-password">Contraseña</label>
+      <input type="password" id="l-password" autocomplete="current-password" required>
+    </div>
+    <button class="btn btn-ancho" type="submit" id="l-entrar">Ingresar</button>
+    <a class="volver" href="/">← Volver a la tienda</a>
+  </form>
+</div>
+
+<!-- Panel -->
+<div id="vista-panel" hidden>
+  <header class="cabecera">
+    <div class="contenedor">
+      <a class="marca" href="/" aria-label="Ir a la tienda">
+        <img src="/img/logo.png" alt="" width="51" height="38">
+        <span>FutSal <b>Panel</b></span>
+      </a>
+      <div class="nav">
+        <span class="tenue ocultar-movil" id="quien" style="color:#a3a3a3;margin-right:8px"></span>
+        <a href="/" target="_blank" rel="noopener" style="display:inline-block">Ver tienda</a>
+        <button class="btn btn-claro btn-chico" type="button" id="salir">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="pestanas">
+    <div class="contenedor" role="tablist" aria-label="Secciones del panel">
+      <button class="pestana" role="tab" type="button" data-pestana="productos" aria-selected="true">Productos</button>
+      <button class="pestana" role="tab" type="button" data-pestana="mensajes" aria-selected="false">Mensajes <span class="burbuja" id="burbuja-mensajes" hidden>0</span></button>
+      <button class="pestana" role="tab" type="button" data-pestana="config" aria-selected="false">Datos del negocio</button>
+      <button class="pestana" role="tab" type="button" data-pestana="usuarios" aria-selected="false" id="pestana-usuarios" hidden>Usuarios</button>
+      <button class="pestana" role="tab" type="button" data-pestana="cuenta" aria-selected="false">Mi cuenta</button>
+    </div>
+  </div>
+
+  <main class="panel-main">
+    <div class="contenedor">
+
+      <!-- Productos -->
+      <section id="sec-productos">
+        <div class="panel-cab">
+          <h2>Productos <span class="tenue" id="cuenta-productos"></span></h2>
+          <button class="btn" type="button" id="nuevo-producto">+ Agregar producto</button>
+        </div>
+        <div class="tabla-envoltura">
+          <table>
+            <thead>
+              <tr><th></th><th>Producto</th><th class="ocultar-movil">Categoría</th><th>Precio</th><th class="ocultar-movil">Talles y stock</th><th class="ocultar-movil">Estado</th><th></th></tr>
+            </thead>
+            <tbody id="tabla-productos"></tbody>
+          </table>
+        </div>
+        <p class="vacio" id="sin-productos" hidden>Todavía no hay productos. Tocá “Agregar producto” para cargar el primero.</p>
+      </section>
+
+      <!-- Mensajes -->
+      <section id="sec-mensajes" hidden>
+        <div class="panel-cab"><h2>Mensajes de clientes</h2></div>
+        <div id="lista-mensajes"></div>
+        <p class="vacio" id="sin-mensajes" hidden>No hay mensajes todavía. Acá aparecen los que envían desde el formulario de contacto.</p>
+      </section>
+
+      <!-- Datos del negocio -->
+      <section id="sec-config" hidden>
+        <div class="panel-cab"><h2>Datos del negocio</h2></div>
+        <form class="caja" id="form-config" novalidate>
+          <div class="aviso" id="config-aviso" role="status" hidden></div>
+          <div class="fila-2">
+            <div class="campo">
+              <label for="cf-whatsapp">WhatsApp del negocio</label>
+              <input type="tel" id="cf-whatsapp" placeholder="5493871234567" maxlength="30">
+              <small>Con código de país y sin espacios. Para Salta: 549387 + el número sin el 15. Acá llegan los pedidos.</small>
+            </div>
+            <div class="campo">
+              <label for="cf-instagram">Instagram</label>
+              <input type="text" id="cf-instagram" placeholder="futsalcamisetas" maxlength="60">
+              <small>Solo el nombre de usuario, sin @.</small>
+            </div>
+          </div>
+          <div class="fila-2">
+            <div class="campo">
+              <label for="cf-direccion">Dirección o zona</label>
+              <input type="text" id="cf-direccion" maxlength="200">
+            </div>
+            <div class="campo">
+              <label for="cf-horario">Horarios</label>
+              <input type="text" id="cf-horario" maxlength="200">
+            </div>
+          </div>
+          <div class="campo">
+            <label for="cf-heroTitulo">Título de la portada</label>
+            <input type="text" id="cf-heroTitulo" maxlength="120">
+          </div>
+          <div class="campo">
+            <label for="cf-heroTexto">Texto de la portada</label>
+            <textarea id="cf-heroTexto" maxlength="400"></textarea>
+          </div>
+          <div class="campo">
+            <label for="cf-envios">Texto sobre envíos (aparece arriba del catálogo)</label>
+            <input type="text" id="cf-envios" maxlength="400">
+          </div>
+          <button class="btn" type="submit" id="cf-guardar">Guardar cambios</button>
+        </form>
+      </section>
+
+      <!-- Usuarios (solo administrador) -->
+      <section id="sec-usuarios" hidden>
+        <div class="panel-cab"><h2>Usuarios del panel</h2></div>
+        <div class="tabla-envoltura">
+          <table>
+            <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th></th></tr></thead>
+            <tbody id="tabla-usuarios"></tbody>
+          </table>
+        </div>
+        <form class="caja" id="form-usuario" novalidate style="margin-top:18px">
+          <h3>Crear usuario</h3>
+          <div class="aviso" id="usuario-aviso" role="status" hidden></div>
+          <div class="fila-2">
+            <div class="campo">
+              <label for="u-usuario">Usuario</label>
+              <input type="text" id="u-usuario" maxlength="30" autocomplete="off" autocapitalize="none" spellcheck="false">
+            </div>
+            <div class="campo">
+              <label for="u-nombre">Nombre</label>
+              <input type="text" id="u-nombre" maxlength="60" autocomplete="off">
+            </div>
+          </div>
+          <div class="fila-2">
+            <div class="campo">
+              <label for="u-password">Contraseña</label>
+              <input type="password" id="u-password" maxlength="100" autocomplete="new-password">
+              <small>Mínimo 8 caracteres.</small>
+            </div>
+            <div class="campo">
+              <label for="u-rol">Rol</label>
+              <select id="u-rol">
+                <option value="dueno">Dueño (productos, mensajes y datos)</option>
+                <option value="admin">Administrador (además maneja usuarios)</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn" type="submit">Crear usuario</button>
+        </form>
+      </section>
+
+      <!-- Mi cuenta -->
+      <section id="sec-cuenta" hidden>
+        <div class="panel-cab"><h2>Mi cuenta</h2></div>
+        <form class="caja" id="form-password" novalidate style="max-width:480px">
+          <h3>Cambiar contraseña</h3>
+          <div class="aviso" id="password-aviso" role="status" hidden></div>
+          <div class="campo">
+            <label for="pw-actual">Contraseña actual</label>
+            <input type="password" id="pw-actual" autocomplete="current-password">
+          </div>
+          <div class="campo">
+            <label for="pw-nueva">Contraseña nueva</label>
+            <input type="password" id="pw-nueva" autocomplete="new-password" maxlength="100">
+            <small>Mínimo 8 caracteres.</small>
+          </div>
+          <div class="campo">
+            <label for="pw-repetir">Repetir contraseña nueva</label>
+            <input type="password" id="pw-repetir" autocomplete="new-password" maxlength="100">
+          </div>
+          <button class="btn" type="submit">Cambiar contraseña</button>
+        </form>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Formulario de producto -->
+<dialog id="dlg-producto" class="dialogo-chico" aria-labelledby="dlg-producto-titulo">
+  <form id="form-producto" novalidate>
+    <div class="dialogo-cab">
+      <h2 id="dlg-producto-titulo">Agregar producto</h2>
+      <button class="btn-icono" type="button" id="cerrar-producto" aria-label="Cerrar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="dialogo-cuerpo">
+      <div class="aviso aviso-error" id="producto-error" role="alert" hidden></div>
+
+      <p class="etiqueta" style="margin-bottom:6px">Foto</p>
+      <div class="editor-imagen">
+        <img id="pr-vista" src="/img/sin-imagen.svg" alt="Vista previa de la foto">
+        <div>
+          <input type="file" id="pr-archivo" accept="image/jpeg,image/png,image/webp" class="oculto-visual">
+          <label for="pr-archivo" class="btn btn-linea btn-chico" id="pr-elegir">Elegir foto</label>
+          <button type="button" class="enlace" id="pr-quitar-foto" style="margin-left:10px" hidden>Quitar</button>
+          <p class="tenue" style="margin-top:6px">JPG, PNG o WEBP. Mejor si es cuadrada.</p>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="pr-nombre">Nombre</label>
+        <input type="text" id="pr-nombre" maxlength="120" placeholder="Camiseta Argentina titular 2026">
+      </div>
+      <div class="fila-2">
+        <div class="campo">
+          <label for="pr-categoria">Categoría</label>
+          <input type="text" id="pr-categoria" maxlength="40" list="lista-categorias" placeholder="Camisetas">
+          <datalist id="lista-categorias"></datalist>
+        </div>
+        <div class="campo">
+          <label for="pr-precio">Precio ($)</label>
+          <input type="number" id="pr-precio" min="0" step="1" inputmode="numeric" placeholder="45000">
+        </div>
+      </div>
+      <div class="campo">
+        <label for="pr-descripcion">Descripción (opcional)</label>
+        <textarea id="pr-descripcion" maxlength="2000"></textarea>
+      </div>
+
+      <p class="etiqueta" style="margin-bottom:6px">Talles y stock</p>
+      <div class="talles-rapidos" id="pr-rapidos"></div>
+      <div id="pr-talles"></div>
+      <button type="button" class="btn btn-linea btn-chico" id="pr-otro-talle">+ Otro talle</button>
+      <p class="tenue" style="margin:8px 0 16px">Un talle con stock 0 se muestra tachado en la tienda. Si el producto no lleva talle, dejalo sin talles.</p>
+
+      <label class="check"><input type="checkbox" id="pr-destacado"> Destacado (aparece primero)</label>
+      <label class="check"><input type="checkbox" id="pr-activo" checked> Visible en la tienda</label>
+    </div>
+    <div class="dialogo-pie">
+      <button class="btn btn-linea" type="button" id="cancelar-producto">Cancelar</button>
+      <button class="btn" type="submit" id="guardar-producto">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Confirmacion -->
+<dialog id="dlg-confirmar" class="dialogo-chico" aria-labelledby="confirmar-titulo">
+  <div class="dialogo-cuerpo">
+    <h2 id="confirmar-titulo" style="font-size:18px;margin-bottom:8px"></h2>
+    <p class="tenue" id="confirmar-texto" style="font-size:15px"></p>
+    <div class="campo" id="confirmar-campo" style="margin-top:14px" hidden>
+      <label for="confirmar-input" id="confirmar-label"></label>
+      <input type="password" id="confirmar-input" autocomplete="new-password" maxlength="100">
+    </div>
+    <div class="aviso aviso-error" id="confirmar-error" role="alert" style="margin-top:12px" hidden></div>
+  </div>
+  <div class="dialogo-pie">
+    <button class="btn btn-linea" type="button" id="confirmar-no">Cancelar</button>
+    <button class="btn" type="button" id="confirmar-si">Aceptar</button>
+  </div>
+</dialog>
+
+<div class="tostada" id="tostada" role="status" hidden></div>
+
+<script src="/js/panel.js"></script>
+</body>
+</html>

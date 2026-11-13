@@ -1,0 +1,16 @@
+{
+  "name": "futsal-camisetas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tienda web de FutSal Camisetas (Salta, Argentina)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.0"
+  }
+}
