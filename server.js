@@ -99,11 +99,22 @@ function productosDeEjemplo() {
   }));
 }
 
+// Crea las categorias que usan los productos y todavia no existen en la lista
+async function sincronizarCategorias() {
+  const productos = await almacen.listarProductos(false);
+  const vistos = new Set();
+  for (const p of productos.slice().sort((a, b) => b.creado - a.creado)) {
+    if (vistos.has(p.categoria)) continue;
+    vistos.add(p.categoria);
+    await asegurarCategoria(p.categoria);
+  }
+}
+
 // Primera vez: crea usuarios, configuracion y productos de ejemplo
 async function prepararDatos() {
   await almacen.iniciar();
   if (!(await almacen.obtenerConfig())) await almacen.guardarConfig(CONFIG_INICIAL);
-  if ((await almacen.contarUsuarios()) > 0) return;
+  if ((await almacen.contarUsuarios()) > 0) return sincronizarCategorias();
 
   const passAdmin = process.env.ADMIN_PASSWORD || passwordAleatoria();
   const passDueno = process.env.OWNER_PASSWORD || passwordAleatoria();
@@ -112,6 +123,7 @@ async function prepararDatos() {
   if ((await almacen.listarProductos(false)).length === 0) {
     for (const p of productosDeEjemplo()) await almacen.guardarProducto(p);
   }
+  await sincronizarCategorias();
 
   const texto = [
     'FutSal Camisetas - credenciales iniciales',
@@ -342,6 +354,21 @@ function validarProducto(data) {
   };
 }
 
+// Devuelve el nombre de la categoria tal como esta guardada (la crea si no existe)
+async function asegurarCategoria(nombre) {
+  const existente = await almacen.categoriaPorNombre(nombre);
+  if (existente) return existente.nombre;
+  const lista = await almacen.listarCategorias();
+  const orden = lista.reduce((m, c) => Math.max(m, c.orden), -1) + 1;
+  await almacen.crearCategoria({ id: nuevoId(), nombre, orden });
+  return nombre;
+}
+
+function nombreCategoria(valor) {
+  const nombre = texto(valor, 40, 'el nombre de la categoría', true).replace(/\s+/g, ' ');
+  return nombre.charAt(0).toUpperCase() + nombre.slice(1);
+}
+
 async function borrarImagenSiNoSeUsa(imagen) {
   if (!imagen || imagen.startsWith('/img/')) return;
   if ((await almacen.contarProductosConImagen(imagen)) > 0) return;
@@ -374,6 +401,10 @@ async function manejarApi(req, res, ruta) {
 
   if (recurso === 'config' && metodo === 'GET' && !id) {
     return enviarJson(res, 200, (await almacen.obtenerConfig()) || CONFIG_INICIAL);
+  }
+
+  if (recurso === 'categorias' && metodo === 'GET' && !id) {
+    return enviarJson(res, 200, await almacen.listarCategorias());
   }
 
   if (recurso === 'productos' && metodo === 'GET' && !id) {
@@ -444,6 +475,7 @@ async function manejarApi(req, res, ruta) {
     await exigirSesion(req);
     if (metodo === 'POST' && !id) {
       const p = validarProducto(await leerJson(req, MAX_JSON_BYTES));
+      p.categoria = await asegurarCategoria(nombreCategoria(p.categoria));
       p.id = nuevoId();
       p.creado = Date.now();
       await almacen.guardarProducto(p);
@@ -453,6 +485,7 @@ async function manejarApi(req, res, ruta) {
     if (id && !anterior) throw new ErrorHttp(404, 'El producto no existe.');
     if (metodo === 'PUT' && id) {
       const nuevo = Object.assign(validarProducto(await leerJson(req, MAX_JSON_BYTES)), { id: anterior.id, creado: anterior.creado });
+      nuevo.categoria = await asegurarCategoria(nombreCategoria(nuevo.categoria));
       await almacen.guardarProducto(nuevo);
       if (anterior.imagen !== nuevo.imagen) await borrarImagenSiNoSeUsa(anterior.imagen);
       return enviarJson(res, 200, nuevo);
@@ -460,6 +493,52 @@ async function manejarApi(req, res, ruta) {
     if (metodo === 'DELETE' && id) {
       await almacen.borrarProducto(id);
       await borrarImagenSiNoSeUsa(anterior.imagen);
+      return enviarJson(res, 200, { ok: true });
+    }
+  }
+
+  if (recurso === 'categorias') {
+    await exigirSesion(req);
+    if (metodo === 'POST' && !id) {
+      const nombre = nombreCategoria((await leerJson(req, MAX_JSON_BYTES)).nombre);
+      if (await almacen.categoriaPorNombre(nombre)) throw new ErrorHttp(400, 'Ya existe la categoría "' + nombre + '".');
+      await asegurarCategoria(nombre);
+      return enviarJson(res, 201, await almacen.categoriaPorNombre(nombre));
+    }
+    const cat = id ? await almacen.categoriaPorId(id) : null;
+    if (id && !cat) throw new ErrorHttp(404, 'La categoría no existe.');
+    if (metodo === 'PUT' && id) {
+      const data = await leerJson(req, MAX_JSON_BYTES);
+      if (data.nombre !== undefined) {
+        const nombre = nombreCategoria(data.nombre);
+        const otra = await almacen.categoriaPorNombre(nombre);
+        if (otra && otra.id !== cat.id) throw new ErrorHttp(400, 'Ya existe la categoría "' + otra.nombre + '".');
+        if (nombre !== cat.nombre) {
+          await almacen.actualizarCategoria(cat.id, { nombre });
+          await almacen.renombrarCategoriaEnProductos(cat.nombre, nombre);
+        }
+      }
+      if (data.mover === 'arriba' || data.mover === 'abajo') {
+        const lista = await almacen.listarCategorias();
+        const i = lista.findIndex((c) => c.id === cat.id);
+        const j = data.mover === 'arriba' ? i - 1 : i + 1;
+        if (j >= 0 && j < lista.length) {
+          const [item] = lista.splice(i, 1);
+          lista.splice(j, 0, item);
+          for (let k = 0; k < lista.length; k++) {
+            if (lista[k].orden !== k) await almacen.actualizarCategoria(lista[k].id, { orden: k });
+          }
+        }
+      }
+      return enviarJson(res, 200, await almacen.listarCategorias());
+    }
+    if (metodo === 'DELETE' && id) {
+      const usados = await almacen.contarProductosEnCategoria(cat.nombre);
+      if (usados > 0) {
+        throw new ErrorHttp(400, 'No se puede borrar: "' + cat.nombre + '" tiene ' + usados +
+          (usados === 1 ? ' producto' : ' productos') + '. Pasalos a otra categoría primero.');
+      }
+      await almacen.borrarCategoria(cat.id);
       return enviarJson(res, 200, { ok: true });
     }
   }

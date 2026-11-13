@@ -9,6 +9,7 @@
 
   var estado = {
     productos: [],
+    categorias: [],
     config: {},
     categoria: 'Todos',
     busqueda: '',
@@ -102,6 +103,8 @@
     var cont = $('categorias');
     cont.textContent = '';
     var cats = ['Todos'];
+    var conProductos = function (nombre) { return estado.productos.some(function (p) { return p.categoria === nombre; }); };
+    estado.categorias.forEach(function (c) { if (conProductos(c.nombre) && cats.indexOf(c.nombre) === -1) cats.push(c.nombre); });
     estado.productos.forEach(function (p) { if (cats.indexOf(p.categoria) === -1) cats.push(p.categoria); });
     if (cats.indexOf(estado.categoria) === -1) estado.categoria = 'Todos';
     if (cats.length <= 2) return; // una sola categoria: no hace falta filtrar
@@ -453,9 +456,14 @@
     });
     $('form-contacto').addEventListener('submit', enviarContacto);
 
-    Promise.all([pedir('/api/productos'), pedir('/api/config')]).then(function (r) {
+    Promise.all([
+      pedir('/api/productos'),
+      pedir('/api/config'),
+      pedir('/api/categorias').catch(function () { return []; })
+    ]).then(function (r) {
       estado.productos = r[0];
       estado.config = r[1] || {};
+      estado.categorias = r[2] || [];
       aplicarConfig();
       pintarCategorias();
       pintarGrilla();

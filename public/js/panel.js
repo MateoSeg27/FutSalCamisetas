@@ -13,6 +13,7 @@
     productos: [],
     mensajes: [],
     usuarios: [],
+    categorias: [],
     editando: null,       // producto en edicion (null = nuevo)
     imagenActual: '',     // url ya guardada
     imagenNueva: null     // dataURL lista para subir
@@ -80,7 +81,9 @@
       $('confirmar-campo').hidden = !opciones.campo;
       $('confirmar-label').textContent = opciones.campo || '';
       $('confirmar-error').hidden = true;
-      input.value = '';
+      input.type = opciones.tipoCampo || 'password';
+      input.autocomplete = opciones.tipoCampo === 'text' ? 'off' : 'new-password';
+      input.value = opciones.valor || '';
 
       function cerrar(valor) {
         si.removeEventListener('click', aceptar);
@@ -91,8 +94,9 @@
       }
       function aceptar() {
         if (opciones.campo) {
-          if (input.value.length < 8) {
-            $('confirmar-error').textContent = 'Debe tener al menos 8 caracteres.';
+          var problema = opciones.validar ? opciones.validar(input.value) : (input.value.length < 8 ? 'Debe tener al menos 8 caracteres.' : '');
+          if (problema) {
+            $('confirmar-error').textContent = problema;
             $('confirmar-error').hidden = false;
             return;
           }
@@ -100,11 +104,12 @@
         } else cerrar(true);
       }
       function cancelar(e) { if (e) e.preventDefault(); cerrar(null); }
+      input.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); aceptar(); } };
       si.addEventListener('click', aceptar);
       $('confirmar-no').addEventListener('click', cancelar);
       dlg.addEventListener('cancel', cancelar);
       dlg.showModal();
-      (opciones.campo ? input : $('confirmar-no')).focus();
+      if (opciones.campo) { input.focus(); input.select(); } else $('confirmar-no').focus();
     });
   }
 
@@ -165,6 +170,7 @@
   }
 
   function cargarTodo() {
+    cargarCategorias();
     cargarProductos();
     cargarMensajes();
     cargarConfig();
@@ -219,11 +225,7 @@
       ]));
     });
 
-    var dl = $('lista-categorias');
-    dl.textContent = '';
-    var cats = ['Camisetas', 'Shorts', 'Buzos y camperas', 'Entrenamiento', 'Niños', 'Accesorios'];
-    lista.forEach(function (p) { if (cats.indexOf(p.categoria) === -1) cats.push(p.categoria); });
-    cats.forEach(function (c) { dl.appendChild(crear('option', { value: c })); });
+    pintarCategorias(); // actualiza la cantidad de productos por categoria
   }
 
   function filaTalle(talle, stock) {
@@ -272,7 +274,8 @@
     estado.imagenNueva = null;
     $('dlg-producto-titulo').textContent = p ? 'Editar producto' : 'Agregar producto';
     $('pr-nombre').value = p ? p.nombre : '';
-    $('pr-categoria').value = p ? p.categoria : 'Camisetas';
+    llenarSelectCategorias(p ? p.categoria : null);
+    mostrarCrearCategoria(estado.categorias.length === 0);
     $('pr-precio').value = p ? p.precio : '';
     $('pr-descripcion').value = p ? p.descripcion : '';
     $('pr-destacado').checked = p ? p.destacado : false;
@@ -321,7 +324,8 @@
   function guardarProducto(ev) {
     ev.preventDefault();
     var nombre = $('pr-nombre').value.trim();
-    var categoria = $('pr-categoria').value.trim();
+    var creando = !$('pr-cat-crear').hidden;
+    var categoria = creando ? $('pr-cat-nombre').value.trim() : $('pr-categoria').value;
     var precioTxt = $('pr-precio').value.trim();
     var precio = Number(precioTxt);
     var talles = tallesDelFormulario();
@@ -329,7 +333,7 @@
     var error = '';
     var vistos = {};
     if (!nombre) error = 'Escribí el nombre del producto.';
-    else if (!categoria) error = 'Escribí la categoría.';
+    else if (!categoria) error = creando ? 'Escribí el nombre de la nueva categoría o tocá ✕ para elegir una existente.' : 'Elegí una categoría.';
     else if (precioTxt === '' || !isFinite(precio) || precio < 0) error = 'Escribí un precio válido (solo números).';
     else talles.some(function (t) {
       var stock = Number(t.stock);
@@ -369,7 +373,7 @@
     }).then(function () {
       $('dlg-producto').close();
       tostada(estado.editando ? 'Producto actualizado' : 'Producto agregado');
-      return cargarProductos();
+      return cargarCategorias().then(cargarProductos);
     }).catch(function (e) {
       aviso('producto-error', e.message);
     }).then(function () {
@@ -389,6 +393,152 @@
       api('DELETE', '/api/productos/' + p.id).then(function () {
         tostada('Producto borrado');
         cargarProductos();
+      }).catch(function (e) { tostada(e.message); });
+    });
+  }
+
+  /* ---------- Categorias ---------- */
+
+  function cargarCategorias() {
+    return api('GET', '/api/categorias').then(function (lista) {
+      estado.categorias = lista;
+      pintarCategorias();
+    }).catch(function (e) { tostada(e.message); });
+  }
+
+  function productosEn(nombre) {
+    return estado.productos.filter(function (p) { return p.categoria === nombre; }).length;
+  }
+
+  function pintarCategorias() {
+    var cuerpo = $('tabla-categorias');
+    cuerpo.textContent = '';
+    var lista = estado.categorias;
+    $('sin-categorias').hidden = lista.length > 0;
+    cuerpo.closest('.tabla-envoltura').hidden = lista.length === 0;
+
+    lista.forEach(function (c, i) {
+      var subir = crear('button', { type: 'button', clase: 'btn-icono', texto: '↑', 'aria-label': 'Subir ' + c.nombre });
+      var bajar = crear('button', { type: 'button', clase: 'btn-icono', texto: '↓', 'aria-label': 'Bajar ' + c.nombre });
+      subir.disabled = i === 0;
+      bajar.disabled = i === lista.length - 1;
+      subir.addEventListener('click', function () { moverCategoria(c, 'arriba'); });
+      bajar.addEventListener('click', function () { moverCategoria(c, 'abajo'); });
+
+      var renombrar = crear('button', { type: 'button', clase: 'btn btn-linea btn-chico', texto: 'Renombrar', 'aria-label': 'Renombrar ' + c.nombre });
+      renombrar.addEventListener('click', function () { renombrarCategoria(c); });
+      var borrar = crear('button', { type: 'button', clase: 'btn btn-peligro btn-chico', texto: 'Borrar', 'aria-label': 'Borrar ' + c.nombre });
+      borrar.addEventListener('click', function () { borrarCategoria(c); });
+
+      var n = productosEn(c.nombre);
+      cuerpo.appendChild(crear('tr', null, [
+        crear('td', null, [crear('span', { clase: 'orden-btns' }, [subir, bajar])]),
+        crear('td', null, [crear('strong', { texto: c.nombre })]),
+        crear('td', { clase: 'tenue', texto: n === 1 ? '1 producto' : n + ' productos' }),
+        crear('td', { clase: 'acciones' }, [renombrar, borrar])
+      ]));
+    });
+  }
+
+  function llenarSelectCategorias(seleccionada) {
+    var sel = $('pr-categoria');
+    sel.textContent = '';
+    if (!estado.categorias.length) sel.appendChild(crear('option', { value: '', texto: 'No hay categorías' }));
+    estado.categorias.forEach(function (c) { sel.appendChild(crear('option', { value: c.nombre, texto: c.nombre })); });
+    if (seleccionada && !estado.categorias.some(function (c) { return c.nombre === seleccionada; })) {
+      sel.appendChild(crear('option', { value: seleccionada, texto: seleccionada }));
+    }
+    if (seleccionada) sel.value = seleccionada;
+  }
+
+  function mostrarCrearCategoria(mostrar) {
+    $('pr-cat-elegir').hidden = mostrar;
+    $('pr-cat-crear').hidden = !mostrar;
+    $('pr-cat-cancelar').hidden = estado.categorias.length === 0;
+    $('pr-cat-nombre').value = '';
+  }
+
+  function validarNombreCategoria(nombre, excepto) {
+    nombre = nombre.trim();
+    if (!nombre) return 'Escribí un nombre.';
+    if (nombre.length > 40) return 'Máximo 40 caracteres.';
+    var repetida = estado.categorias.some(function (c) {
+      return c.id !== excepto && c.nombre.toLowerCase() === nombre.toLowerCase();
+    });
+    return repetida ? 'Ya existe una categoría con ese nombre.' : '';
+  }
+
+  function crearCategoria(nombre) {
+    return api('POST', '/api/categorias', { nombre: nombre.trim() }).then(function (c) {
+      return cargarCategorias().then(function () { return c; });
+    });
+  }
+
+  function agregarCategoriaDesdeProducto() {
+    var nombre = $('pr-cat-nombre').value;
+    var problema = validarNombreCategoria(nombre);
+    if (problema) { aviso('producto-error', problema); $('pr-cat-nombre').focus(); return; }
+    var boton = $('pr-cat-agregar');
+    boton.disabled = true;
+    crearCategoria(nombre).then(function (c) {
+      aviso('producto-error', '');
+      llenarSelectCategorias(c.nombre);
+      mostrarCrearCategoria(false);
+      tostada('Categoría “' + c.nombre + '” creada');
+    }).catch(function (e) {
+      aviso('producto-error', e.message);
+    }).then(function () { boton.disabled = false; });
+  }
+
+  function agregarCategoriaDesdePestana(ev) {
+    ev.preventDefault();
+    var nombre = $('cat-nombre').value;
+    var problema = validarNombreCategoria(nombre);
+    if (problema) { aviso('categoria-aviso', problema); return; }
+    crearCategoria(nombre).then(function (c) {
+      $('form-categoria').reset();
+      aviso('categoria-aviso', 'Categoría “' + c.nombre + '” creada.', true);
+    }).catch(function (e) { aviso('categoria-aviso', e.message); });
+  }
+
+  function moverCategoria(c, hacia) {
+    api('PUT', '/api/categorias/' + c.id, { mover: hacia }).then(function (lista) {
+      estado.categorias = lista;
+      pintarCategorias();
+    }).catch(function (e) { tostada(e.message); });
+  }
+
+  function renombrarCategoria(c) {
+    var n = productosEn(c.nombre);
+    confirmar({
+      titulo: 'Renombrar “' + c.nombre + '”',
+      texto: n ? 'Se actualizan también ' + (n === 1 ? 'el producto' : 'los ' + n + ' productos') + ' de esta categoría.' : '',
+      campo: 'Nombre nuevo',
+      tipoCampo: 'text',
+      valor: c.nombre,
+      validar: function (v) { return validarNombreCategoria(v, c.id); },
+      boton: 'Guardar'
+    }).then(function (nombre) {
+      if (!nombre || nombre.trim() === c.nombre) return;
+      api('PUT', '/api/categorias/' + c.id, { nombre: nombre.trim() }).then(function (lista) {
+        estado.categorias = lista;
+        tostada('Categoría renombrada');
+        return cargarProductos();
+      }).catch(function (e) { tostada(e.message); });
+    });
+  }
+
+  function borrarCategoria(c) {
+    var n = productosEn(c.nombre);
+    if (n > 0) {
+      tostada('“' + c.nombre + '” tiene ' + (n === 1 ? '1 producto' : n + ' productos') + '. Pasalos a otra categoría antes de borrarla.');
+      return;
+    }
+    confirmar({ titulo: '¿Borrar la categoría “' + c.nombre + '”?', texto: 'No tiene productos. No se puede deshacer.', boton: 'Borrar', peligro: true }).then(function (ok) {
+      if (!ok) return;
+      api('DELETE', '/api/categorias/' + c.id).then(function () {
+        tostada('Categoría borrada');
+        cargarCategorias();
       }).catch(function (e) { tostada(e.message); });
     });
   }
@@ -592,6 +742,13 @@
       vistaImagen();
     });
 
+    $('pr-cat-nueva').addEventListener('click', function () { mostrarCrearCategoria(true); $('pr-cat-nombre').focus(); });
+    $('pr-cat-cancelar').addEventListener('click', function () { mostrarCrearCategoria(false); aviso('producto-error', ''); });
+    $('pr-cat-agregar').addEventListener('click', agregarCategoriaDesdeProducto);
+    $('pr-cat-nombre').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); agregarCategoriaDesdeProducto(); }
+    });
+    $('form-categoria').addEventListener('submit', agregarCategoriaDesdePestana);
     $('form-config').addEventListener('submit', guardarConfig);
     $('form-usuario').addEventListener('submit', crearUsuario);
     $('form-password').addEventListener('submit', cambiarPassword);

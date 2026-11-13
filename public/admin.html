@@ -50,6 +50,7 @@
     <div class="contenedor" role="tablist" aria-label="Secciones del panel">
       <button class="pestana" role="tab" type="button" data-pestana="productos" aria-selected="true">Productos</button>
       <button class="pestana" role="tab" type="button" data-pestana="mensajes" aria-selected="false">Mensajes <span class="burbuja" id="burbuja-mensajes" hidden>0</span></button>
+      <button class="pestana" role="tab" type="button" data-pestana="categorias" aria-selected="false">Categorías</button>
       <button class="pestana" role="tab" type="button" data-pestana="config" aria-selected="false">Datos del negocio</button>
       <button class="pestana" role="tab" type="button" data-pestana="usuarios" aria-selected="false" id="pestana-usuarios" hidden>Usuarios</button>
       <button class="pestana" role="tab" type="button" data-pestana="cuenta" aria-selected="false">Mi cuenta</button>
@@ -81,6 +82,28 @@
         <div class="panel-cab"><h2>Mensajes de clientes</h2></div>
         <div id="lista-mensajes"></div>
         <p class="vacio" id="sin-mensajes" hidden>No hay mensajes todavía. Acá aparecen los que envían desde el formulario de contacto.</p>
+      </section>
+
+      <!-- Categorias -->
+      <section id="sec-categorias" hidden>
+        <div class="panel-cab"><h2>Categorías</h2></div>
+        <p class="tenue" style="margin:-8px 0 16px">El orden de esta lista es el orden en que aparecen los filtros en la tienda. En la tienda solo se muestran las categorías que tienen productos visibles.</p>
+        <div class="tabla-envoltura">
+          <table>
+            <thead><tr><th>Orden</th><th>Categoría</th><th>Productos</th><th></th></tr></thead>
+            <tbody id="tabla-categorias"></tbody>
+          </table>
+        </div>
+        <p class="vacio" id="sin-categorias" hidden>Todavía no hay categorías.</p>
+        <form class="caja" id="form-categoria" novalidate style="margin-top:18px;max-width:520px">
+          <h3>Nueva categoría</h3>
+          <div class="aviso" id="categoria-aviso" role="status" hidden></div>
+          <div class="campo">
+            <label for="cat-nombre">Nombre</label>
+            <input type="text" id="cat-nombre" maxlength="40" placeholder="Buzos y camperas" autocomplete="off">
+          </div>
+          <button class="btn" type="submit">Agregar categoría</button>
+        </form>
       </section>
 
       <!-- Datos del negocio -->
@@ -223,8 +246,15 @@
       <div class="fila-2">
         <div class="campo">
           <label for="pr-categoria">Categoría</label>
-          <input type="text" id="pr-categoria" maxlength="40" list="lista-categorias" placeholder="Camisetas">
-          <datalist id="lista-categorias"></datalist>
+          <div class="fila-categoria" id="pr-cat-elegir">
+            <select id="pr-categoria"></select>
+            <button type="button" class="btn btn-linea btn-chico" id="pr-cat-nueva">+ Nueva</button>
+          </div>
+          <div class="fila-categoria" id="pr-cat-crear" hidden>
+            <input type="text" id="pr-cat-nombre" maxlength="40" placeholder="Nombre de la categoría" aria-label="Nombre de la nueva categoría" autocomplete="off">
+            <button type="button" class="btn btn-chico" id="pr-cat-agregar">Agregar</button>
+            <button type="button" class="btn-icono" id="pr-cat-cancelar" aria-label="Cancelar nueva categoría">✕</button>
+          </div>
         </div>
         <div class="campo">
           <label for="pr-precio">Precio ($)</label>

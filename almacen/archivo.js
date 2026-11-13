@@ -44,6 +44,14 @@ function crear(dataDir) {
       db.productos = db.productos || [];
       db.mensajes = db.mensajes || [];
       db.config = db.config || null;
+      if (!Array.isArray(db.categorias)) {
+        db.categorias = [];
+        db.productos.forEach((p) => {
+          if (!db.categorias.some((c) => c.nombre.toLowerCase() === p.categoria.toLowerCase())) {
+            db.categorias.push({ id: require('crypto').randomBytes(8).toString('hex'), nombre: p.categoria, orden: db.categorias.length });
+          }
+        });
+      }
       guardar();
     },
 
@@ -96,6 +104,28 @@ function crear(dataDir) {
       return p;
     },
     async borrarProducto(id) { db.productos = db.productos.filter((p) => p.id !== id); guardar(); },
+
+    async contarProductosEnCategoria(nombre) { return db.productos.filter((p) => p.categoria === nombre).length; },
+    async renombrarCategoriaEnProductos(viejo, nuevo) {
+      db.productos.forEach((p) => { if (p.categoria === viejo) p.categoria = nuevo; });
+      guardar();
+    },
+
+    /* ---- Categorias ---- */
+    async listarCategorias() {
+      return copia(db.categorias).sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre));
+    },
+    async categoriaPorId(id) { return copia(db.categorias.find((c) => c.id === id) || null); },
+    async categoriaPorNombre(nombre) {
+      const n = nombre.toLowerCase();
+      return copia(db.categorias.find((c) => c.nombre.toLowerCase() === n) || null);
+    },
+    async crearCategoria(c) { db.categorias.push(copia(c)); guardar(); return c; },
+    async actualizarCategoria(id, campos) {
+      const c = db.categorias.find((x) => x.id === id);
+      if (c) { Object.assign(c, campos); guardar(); }
+    },
+    async borrarCategoria(id) { db.categorias = db.categorias.filter((c) => c.id !== id); guardar(); },
 
     /* ---- Mensajes ---- */
     async listarMensajes() { return copia(db.mensajes.slice(0, 500)); },

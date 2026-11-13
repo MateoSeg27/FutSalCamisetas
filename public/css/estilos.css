@@ -254,6 +254,12 @@ td.acciones .btn { margin-left: 6px; }
 .editor-imagen { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; }
 .editor-imagen img { width: 96px; height: 96px; object-fit: cover; border-radius: var(--radio); background: var(--gris-100); border: 1px solid var(--gris-200); }
 .talles-rapidos { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.fila-categoria { display: flex; gap: 8px; align-items: center; }
+.fila-categoria select, .fila-categoria input { flex: 1; min-width: 0; }
+.fila-categoria .btn { flex: 0 0 auto; min-height: 44px; }
+.orden-btns { display: inline-flex; gap: 4px; }
+.orden-btns .btn-icono { width: 34px; height: 34px; border: 1px solid var(--gris-200); }
+.orden-btns .btn-icono:disabled { opacity: .3; cursor: not-allowed; }
 .fila-talle { display: grid; grid-template-columns: 1fr 1fr 44px; gap: 8px; margin-bottom: 8px; align-items: center; }
 .dialogo-pie { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--gris-200); position: sticky; bottom: 0; background: var(--blanco); }
 

@@ -118,6 +118,36 @@ function crear(url, clave) {
       ok(await sb.from('productos').delete().eq('id', id));
     },
 
+    async contarProductosEnCategoria(nombre) {
+      const res = await sb.from('productos').select('id', { count: 'exact', head: true }).eq('categoria', nombre);
+      ok(res);
+      return res.count || 0;
+    },
+    async renombrarCategoriaEnProductos(viejo, nuevo) {
+      ok(await sb.from('productos').update({ categoria: nuevo }).eq('categoria', viejo));
+    },
+
+    /* ---- Categorias ---- */
+    async listarCategorias() {
+      return ok(await sb.from('categorias').select('id,nombre,orden').order('orden').order('nombre'));
+    },
+    async categoriaPorId(id) {
+      return ok(await sb.from('categorias').select('id,nombre,orden').eq('id', id).maybeSingle());
+    },
+    async categoriaPorNombre(nombre) {
+      return ok(await sb.from('categorias').select('id,nombre,orden').ilike('nombre', nombre.replace(/[%_\\]/g, '\\$&')).maybeSingle());
+    },
+    async crearCategoria(c) {
+      ok(await sb.from('categorias').insert({ id: c.id, nombre: c.nombre, orden: c.orden }));
+      return c;
+    },
+    async actualizarCategoria(id, campos) {
+      ok(await sb.from('categorias').update(campos).eq('id', id));
+    },
+    async borrarCategoria(id) {
+      ok(await sb.from('categorias').delete().eq('id', id));
+    },
+
     /* ---- Mensajes ---- */
     async listarMensajes() {
       return ok(await sb.from('mensajes').select('*').order('fecha', { ascending: false }).limit(500)).map(mensajeDeFila);
