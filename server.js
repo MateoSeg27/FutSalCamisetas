@@ -619,7 +619,7 @@ const servidor = http.createServer((req, res) => {
   }
   if (ruta === '/') ruta = '/index.html';
   if (ruta === '/admin' || ruta === '/admin/') ruta = '/admin.html';
-  const esImagen = ruta.startsWith('/img/') || ruta === '/favicon.ico';
+  const esImagen = ruta.startsWith('/img/') || ruta === '/favicon.svg';
   servirArchivo(req, res, PUBLIC_DIR, ruta.slice(1), esImagen ? 'public, max-age=86400' : 'no-cache');
 });
 
