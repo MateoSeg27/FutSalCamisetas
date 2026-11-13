@@ -31,6 +31,11 @@ const almacen = (process.env.SUPABASE_URL && process.env.SUPABASE_SECRET_KEY)
   ? require('./almacen/supabase').crear(process.env.SUPABASE_URL, process.env.SUPABASE_SECRET_KEY)
   : require('./almacen/archivo').crear(DATA_DIR);
 
+if (DETRAS_DE_PROXY && almacen.tipo === 'archivo' && !process.env.PERMITIR_ARCHIVO_LOCAL) {
+  console.error('Faltan SUPABASE_URL y SUPABASE_SECRET_KEY. Cargalas en Render -> Environment.');
+  process.exit(1);
+}
+
 const CONFIG_INICIAL = {
   whatsapp: '',
   instagram: '',
