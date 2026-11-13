@@ -639,6 +639,10 @@ servidor.on('error', (err) => {
 });
 
 prepararDatos().then(() => {
+  // Consulta diaria a la base para que Supabase (plan gratis) no la pause por inactividad
+  if (almacen.tipo === 'supabase') {
+    setInterval(() => { almacen.obtenerConfig().catch(() => {}); }, 24 * 60 * 60 * 1000).unref();
+  }
   servidor.listen(PORT, () => {
     console.log('\nFutSal Camisetas funcionando (datos en ' + (almacen.tipo === 'supabase' ? 'Supabase' : DATA_DIR) + ').');
     console.log('  Tienda: http://localhost:' + PORT);
