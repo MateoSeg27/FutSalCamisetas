@@ -528,6 +528,11 @@
     portada.addEventListener('focusin', function () { pausar(true); });
     portada.addEventListener('focusout', function () { pausar(false); });
     document.addEventListener('visibilitychange', programarCarrusel);
+    // al girar el celular o cambiar el tamaño de la ventana se cambia de lista
+    if (consultaMovil) {
+      if (consultaMovil.addEventListener) consultaMovil.addEventListener('change', elegirCarrusel);
+      else if (consultaMovil.addListener) consultaMovil.addListener(elegirCarrusel);
+    }
     var inicioX = null;
     portada.addEventListener('touchstart', function (e) { inicioX = e.touches[0].clientX; }, { passive: true });
     portada.addEventListener('touchend', function (e) {
@@ -538,9 +543,23 @@
     });
   }
 
+  // Celulares en vertical usan su propia lista; si esta vacia, la de computadoras
+  var consultaMovil = window.matchMedia ? window.matchMedia('(orientation: portrait) and (max-width: 900px)') : null;
+
+  function elegirCarrusel() {
+    var c = estado.config;
+    var pc = Array.isArray(c.carrusel) ? c.carrusel : [];
+    var movil = Array.isArray(c.carruselMovil) ? c.carruselMovil : [];
+    var esMovil = !!(consultaMovil && consultaMovil.matches);
+    var usaMovil = esMovil && movil.length > 0;
+    $('portada').classList.toggle('vertical', usaMovil);
+    carrusel.actual = 0;
+    armarCarrusel(usaMovil ? movil : pc);
+  }
+
   function aplicarConfig() {
     var c = estado.config;
-    armarCarrusel(c.carrusel);
+    elegirCarrusel();
     if (c.heroTitulo) $('hero-titulo').textContent = c.heroTitulo;
     if (c.heroTexto) $('hero-texto').textContent = c.heroTexto;
     $('texto-envios').textContent = c.envios || '';

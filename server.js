@@ -605,29 +605,34 @@ async function manejarApi(req, res, ruta) {
       heroTexto: texto(data.heroTexto, 400, 'el texto de portada', false),
       envios: texto(data.envios, 400, 'el texto de envíos', false),
     };
-    // el carrusel se guarda aparte (PUT /api/carrusel): aca se conserva
+    // los carruseles se guardan aparte (PUT /api/carrusel): aca se conservan
     const anterior = (await almacen.obtenerConfig()) || {};
     config.carrusel = Array.isArray(anterior.carrusel) ? anterior.carrusel : [];
+    config.carruselMovil = Array.isArray(anterior.carruselMovil) ? anterior.carruselMovil : [];
     await almacen.guardarConfig(config);
     return enviarJson(res, 200, config);
   }
 
+  // Carrusel de la portada: una lista para computadoras y otra para celulares
   if (recurso === 'carrusel' && metodo === 'PUT' && !id) {
     await exigirSesion(req);
     const data = await leerJson(req, MAX_JSON_BYTES);
+    const campo = data.tipo === 'movil' ? 'carruselMovil' : 'carrusel';
     if (!Array.isArray(data.imagenes)) throw new ErrorHttp(400, 'Las imágenes no son válidas.');
-    if (data.imagenes.length > MAX_CARRUSEL) throw new ErrorHttp(400, 'Máximo ' + MAX_CARRUSEL + ' imágenes en el carrusel.');
+    if (data.imagenes.length > MAX_CARRUSEL) throw new ErrorHttp(400, 'Máximo ' + MAX_CARRUSEL + ' imágenes en cada carrusel.');
     const imagenes = data.imagenes.map((i) => texto(i, 300, 'la imagen', true));
     if (!imagenes.every((i) => i.startsWith(almacen.prefijoImagenes) && imagenValida(i))) {
       throw new ErrorHttp(400, 'Alguna de las imágenes no es válida.');
     }
     if (new Set(imagenes).size !== imagenes.length) throw new ErrorHttp(400, 'Hay una imagen repetida.');
     const config = Object.assign({}, CONFIG_INICIAL, (await almacen.obtenerConfig()) || {});
-    const anteriores = Array.isArray(config.carrusel) ? config.carrusel : [];
-    config.carrusel = imagenes;
+    const anteriores = Array.isArray(config[campo]) ? config[campo] : [];
+    const otraLista = campo === 'carrusel' ? config.carruselMovil : config.carrusel;
+    if (imagenes.some((i) => (otraLista || []).includes(i))) throw new ErrorHttp(400, 'Esa imagen ya está en el otro carrusel.');
+    config[campo] = imagenes;
     await almacen.guardarConfig(config);
     await borrarImagenesQuitadas(anteriores, imagenes);
-    return enviarJson(res, 200, { imagenes });
+    return enviarJson(res, 200, { tipo: campo === 'carruselMovil' ? 'movil' : 'pc', imagenes });
   }
 
   if (recurso === 'clientes' && metodo === 'GET' && !id) {

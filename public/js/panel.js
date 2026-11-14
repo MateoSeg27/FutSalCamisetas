@@ -704,73 +704,76 @@
 
   var CAMPOS_CONFIG = ['whatsapp', 'instagram', 'direccion', 'horario', 'heroTitulo', 'heroTexto', 'envios'];
 
-  /* ---------- Carrusel de la portada ---------- */
+  /* ---------- Carrusel de la portada (computadoras y celulares) ---------- */
 
   var MAX_CARRUSEL = 8;
-  var carrusel = [];
+  var carruseles = { pc: [], movil: [] };
   var carruselOcupado = false;
+  var NOMBRE_CARRUSEL = { pc: 'computadoras', movil: 'celulares' };
 
-  function pintarCarrusel() {
-    var cont = $('ca-fotos');
+  function pintarCarrusel(tipo) {
+    var lista = carruseles[tipo];
+    var cont = $('ca-fotos-' + tipo);
     cont.textContent = '';
-    $('ca-cuenta').textContent = '(' + carrusel.length + ' de ' + MAX_CARRUSEL + ')';
-    carrusel.forEach(function (url, i) {
-      var img = crear('img', { src: url, alt: 'Imagen ' + (i + 1) + ' del carrusel' });
-      var izq = crear('button', { type: 'button', texto: '←', 'aria-label': 'Mover la imagen ' + (i + 1) + ' antes' });
-      var der = crear('button', { type: 'button', texto: '→', 'aria-label': 'Mover la imagen ' + (i + 1) + ' después' });
-      var quitar = crear('button', { type: 'button', texto: '✕', 'aria-label': 'Quitar la imagen ' + (i + 1) + ' del carrusel' });
+    $('ca-cuenta-' + tipo).textContent = '(' + lista.length + ' de ' + MAX_CARRUSEL + ')';
+    lista.forEach(function (url, i) {
+      var n = 'la imagen ' + (i + 1) + ' de ' + NOMBRE_CARRUSEL[tipo];
+      var img = crear('img', { src: url, alt: 'Imagen ' + (i + 1) + ' del carrusel de ' + NOMBRE_CARRUSEL[tipo] });
+      var izq = crear('button', { type: 'button', texto: '←', 'aria-label': 'Mover antes ' + n });
+      var der = crear('button', { type: 'button', texto: '→', 'aria-label': 'Mover después ' + n });
+      var quitar = crear('button', { type: 'button', texto: '✕', 'aria-label': 'Quitar ' + n });
       izq.disabled = i === 0;
-      der.disabled = i === carrusel.length - 1;
-      izq.addEventListener('click', function () { moverCarrusel(i, -1); });
-      der.addEventListener('click', function () { moverCarrusel(i, 1); });
+      der.disabled = i === lista.length - 1;
+      izq.addEventListener('click', function () { moverCarrusel(tipo, i, -1); });
+      der.addEventListener('click', function () { moverCarrusel(tipo, i, 1); });
       quitar.addEventListener('click', function () {
         confirmar({ titulo: '¿Quitar esta imagen del carrusel?', texto: 'Deja de mostrarse en la portada y se borra.', boton: 'Quitar', peligro: true }).then(function (ok) {
           if (!ok) return;
-          var nueva = carrusel.slice();
+          var nueva = carruseles[tipo].slice();
           nueva.splice(i, 1);
-          guardarCarrusel(nueva, 'Imagen quitada');
+          guardarCarrusel(tipo, nueva, 'Imagen quitada');
         });
       });
       cont.appendChild(crear('div', { clase: 'foto-item' }, [img, crear('div', { clase: 'foto-acc' }, [izq, quitar, der])]));
     });
-    if (carrusel.length < MAX_CARRUSEL) {
-      var agregar = crear('label', { 'for': 'ca-archivo', clase: 'foto-agregar' }, [
+    if (lista.length < MAX_CARRUSEL) {
+      var agregar = crear('label', { 'for': 'ca-archivo-' + tipo, clase: 'foto-agregar', 'aria-label': 'Agregar imagen para ' + NOMBRE_CARRUSEL[tipo] }, [
         crear('span', { texto: '+', 'aria-hidden': 'true' }),
-        document.createTextNode('Agregar imagen')
+        document.createTextNode('Agregar')
       ]);
       agregar.tabIndex = 0;
       agregar.setAttribute('role', 'button');
       agregar.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('ca-archivo').click(); }
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('ca-archivo-' + tipo).click(); }
       });
       cont.appendChild(agregar);
     }
   }
 
-  function guardarCarrusel(lista, mensaje) {
-    return api('PUT', '/api/carrusel', { imagenes: lista }).then(function (r) {
-      carrusel = r.imagenes;
-      pintarCarrusel();
-      if (mensaje) aviso('carrusel-aviso', mensaje + '. Ya se ve en la tienda.', true);
+  function guardarCarrusel(tipo, lista, mensaje) {
+    return api('PUT', '/api/carrusel', { tipo: tipo, imagenes: lista }).then(function (r) {
+      carruseles[tipo] = r.imagenes;
+      pintarCarrusel(tipo);
+      if (mensaje) aviso('carrusel-aviso', mensaje + ' (' + NOMBRE_CARRUSEL[tipo] + '). Ya se ve en la tienda.', true);
     }).catch(function (e) {
       aviso('carrusel-aviso', e.message);
-      pintarCarrusel();
+      pintarCarrusel(tipo);
     });
   }
 
-  function moverCarrusel(i, delta) {
+  function moverCarrusel(tipo, i, delta) {
     var j = i + delta;
-    if (j < 0 || j >= carrusel.length) return;
-    var nueva = carrusel.slice();
+    if (j < 0 || j >= carruseles[tipo].length) return;
+    var nueva = carruseles[tipo].slice();
     var f = nueva.splice(i, 1)[0];
     nueva.splice(j, 0, f);
-    guardarCarrusel(nueva, 'Orden cambiado');
+    guardarCarrusel(tipo, nueva, 'Orden cambiado');
   }
 
-  function agregarAlCarrusel(archivos) {
+  function agregarAlCarrusel(tipo, archivos) {
     if (carruselOcupado) return;
     var lista = Array.prototype.slice.call(archivos);
-    var lugar = MAX_CARRUSEL - carrusel.length;
+    var lugar = MAX_CARRUSEL - carruseles[tipo].length;
     if (!lista.length) return;
     var recortado = lista.length > lugar;
     lista = lista.slice(0, Math.max(lugar, 0));
@@ -786,7 +789,7 @@
       });
     }, Promise.resolve()).then(function () {
       if (!nuevas.length) { aviso('carrusel-aviso', error || 'No se pudo subir la imagen.'); return; }
-      return guardarCarrusel(carrusel.concat(nuevas), nuevas.length === 1 ? 'Imagen agregada' : nuevas.length + ' imágenes agregadas').then(function () {
+      return guardarCarrusel(tipo, carruseles[tipo].concat(nuevas), nuevas.length === 1 ? 'Imagen agregada' : nuevas.length + ' imágenes agregadas').then(function () {
         if (error) aviso('carrusel-aviso', 'Una imagen no se pudo subir: ' + error);
         else if (recortado) aviso('carrusel-aviso', 'Máximo ' + MAX_CARRUSEL + ' imágenes: se agregaron solo las que entraban.');
       });
@@ -795,8 +798,10 @@
 
   function cargarConfig() {
     return api('GET', '/api/config').then(function (c) {
-      carrusel = Array.isArray(c.carrusel) ? c.carrusel : [];
-      pintarCarrusel();
+      carruseles.pc = Array.isArray(c.carrusel) ? c.carrusel : [];
+      carruseles.movil = Array.isArray(c.carruselMovil) ? c.carruselMovil : [];
+      pintarCarrusel('pc');
+      pintarCarrusel('movil');
       CAMPOS_CONFIG.forEach(function (k) { $('cf-' + k).value = c[k] || ''; });
     }).catch(function (e) { tostada(e.message); });
   }
@@ -927,9 +932,11 @@
     });
     $('form-categoria').addEventListener('submit', agregarCategoriaDesdePestana);
     $('form-config').addEventListener('submit', guardarConfig);
-    $('ca-archivo').addEventListener('change', function (e) {
-      agregarAlCarrusel(e.target.files || []);
-      e.target.value = '';
+    ['pc', 'movil'].forEach(function (tipo) {
+      $('ca-archivo-' + tipo).addEventListener('change', function (e) {
+        agregarAlCarrusel(tipo, e.target.files || []);
+        e.target.value = '';
+      });
     });
     $('form-usuario').addEventListener('submit', crearUsuario);
     $('form-password').addEventListener('submit', cambiarPassword);

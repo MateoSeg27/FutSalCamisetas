@@ -167,11 +167,19 @@
         </form>
 
         <div class="caja">
-          <h3>Carrusel de la portada <span class="tenue" id="ca-cuenta">(0 de 8)</span></h3>
+          <h3>Carrusel de la portada</h3>
           <div class="aviso" id="carrusel-aviso" role="status" hidden></div>
-          <p class="tenue" style="margin-bottom:12px">La portada con el título y el logo siempre es la primera. Las imágenes que agregues acá pasan después, una cada 5 segundos, en este orden. Quedan mejor si son horizontales (por ejemplo 1920 × 600). Los cambios se guardan solos.</p>
-          <div class="galeria-editor carrusel-editor" id="ca-fotos"></div>
-          <input type="file" id="ca-archivo" accept="image/jpeg,image/png,image/webp" multiple class="oculto-visual">
+          <p class="tenue">La portada con el título y el logo siempre es la primera. Las imágenes pasan después, una cada 5 segundos, en el orden en que están. Los cambios se guardan solos.</p>
+
+          <h4 class="carrusel-sub">Para computadoras y pantallas horizontales <span class="tenue" id="ca-cuenta-pc">(0 de 8)</span></h4>
+          <p class="tenue" style="margin-bottom:10px">Imágenes horizontales, por ejemplo 1920 × 600.</p>
+          <div class="galeria-editor carrusel-editor" id="ca-fotos-pc"></div>
+          <input type="file" id="ca-archivo-pc" accept="image/jpeg,image/png,image/webp" multiple class="oculto-visual">
+
+          <h4 class="carrusel-sub">Para celulares (pantalla vertical) <span class="tenue" id="ca-cuenta-movil">(0 de 8)</span></h4>
+          <p class="tenue" style="margin-bottom:10px">Imágenes verticales, por ejemplo 1080 × 1350. Si no cargás ninguna, en el celular se muestran las de computadora.</p>
+          <div class="galeria-editor carrusel-editor movil" id="ca-fotos-movil"></div>
+          <input type="file" id="ca-archivo-movil" accept="image/jpeg,image/png,image/webp" multiple class="oculto-visual">
         </div>
       </section>
 
