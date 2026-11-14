@@ -344,6 +344,21 @@
     pintarCarrito();
   }
 
+  // Si el cliente inicio sesion, completa sus datos en el pedido
+  function cargarCliente() {
+    pedir('/api/cuenta').then(function (r) {
+      var c = r.cliente;
+      if (!c) return;
+      var link = $('link-cuenta');
+      link.setAttribute('aria-label', 'Mi cuenta (' + c.nombre + ')');
+      link.title = 'Mi cuenta: ' + c.nombre;
+      if (!$('ped-nombre').value) $('ped-nombre').value = c.nombre + ' ' + c.apellido;
+      if (!$('ped-direccion').value) {
+        $('ped-direccion').value = [c.direccion, c.localidad, c.provincia].filter(Boolean).join(', ') + (c.cp ? ' (CP ' + c.cp + ')' : '');
+      }
+    }).catch(function () {});
+  }
+
   function abrirCarrito() {
     pintarCarrito();
     $('velo').hidden = false;
@@ -520,6 +535,7 @@
     ]).then(function (r) {
       estado.productos = r[0];
       estado.config = r[1] || {};
+      cargarCliente();
       estado.categorias = r[2] || [];
       aplicarConfig();
       pintarCategorias();

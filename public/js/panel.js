@@ -616,6 +616,29 @@
     });
   }
 
+  /* ---------- Clientes ---------- */
+
+  function cargarClientes() {
+    return api('GET', '/api/clientes').then(function (lista) {
+      var cuerpo = $('tabla-clientes');
+      cuerpo.textContent = '';
+      $('cuenta-clientes').textContent = lista.length ? '(' + lista.length + ')' : '';
+      $('sin-clientes').hidden = lista.length > 0;
+      cuerpo.closest('.tabla-envoltura').hidden = lista.length === 0;
+      lista.forEach(function (c) {
+        var direccion = [c.direccion, c.localidad, c.provincia].filter(Boolean).join(', ') + (c.cp ? ' (CP ' + c.cp + ')' : '');
+        cuerpo.appendChild(crear('tr', null, [
+          crear('td', null, [crear('strong', { texto: c.nombre + ' ' + c.apellido })]),
+          crear('td', null, [crear('a', { href: 'mailto:' + c.email, texto: c.email })]),
+          crear('td', { clase: 'ocultar-movil tenue', texto: direccion }),
+          crear('td', { clase: 'ocultar-movil tenue', texto: c.telefono || '—' }),
+          crear('td', null, [crear('span', { clase: c.verificado ? 'pastilla ok' : 'pastilla', texto: c.verificado ? 'Confirmado' : 'Sin confirmar' })]),
+          crear('td', { clase: 'ocultar-movil tenue', texto: fechaFmt.format(new Date(c.creado)) })
+        ]));
+      });
+    }).catch(function (e) { tostada(e.message); });
+  }
+
   /* ---------- Mensajes ---------- */
 
   function cargarMensajes() {
@@ -787,6 +810,7 @@
         var nombre = b.getAttribute('data-pestana');
         irA(nombre);
         if (nombre === 'mensajes') cargarMensajes();
+        if (nombre === 'clientes') cargarClientes();
       });
     });
 

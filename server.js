@@ -393,6 +393,11 @@ function tipoDeImagen(buf) {
   return null;
 }
 
+const cuentas = require('./cuentas').crear({
+  almacen, ErrorHttp, enviarJson, leerJson, texto, limitar, ipDe, hashPassword, verificarPassword,
+  nuevoId, hashToken, leerCookies, esHttps, enProduccion: DETRAS_DE_PROXY,
+});
+
 /* ------------------------------------------------------------------ */
 /* API                                                                 */
 /* ------------------------------------------------------------------ */
@@ -402,6 +407,7 @@ async function manejarApi(req, res, ruta) {
   const partes = ruta.split('/').filter(Boolean); // ['api', 'productos', ':id']
   const recurso = partes[1];
   const id = partes[2];
+  if (recurso === 'cuenta') return cuentas.manejar(req, res, partes[2] || '');
   if (id && !/^[a-f0-9]{16}$/.test(id)) throw new ErrorHttp(404, 'No encontrado.');
 
   /* ---- Publico ---- */
@@ -602,6 +608,11 @@ async function manejarApi(req, res, ruta) {
     return enviarJson(res, 200, config);
   }
 
+  if (recurso === 'clientes' && metodo === 'GET' && !id) {
+    await exigirSesion(req);
+    return enviarJson(res, 200, await almacen.listarClientes());
+  }
+
   if (recurso === 'usuarios') {
     const yo = await exigirAdmin(req);
     if (metodo === 'GET' && !id) return enviarJson(res, 200, (await almacen.listarUsuarios()).map(usuarioPublico));
@@ -714,6 +725,7 @@ const servidor = http.createServer((req, res) => {
   }
   if (ruta === '/') ruta = '/index.html';
   if (ruta === '/admin' || ruta === '/admin/') ruta = '/admin.html';
+  if (ruta === '/cuenta' || ruta === '/cuenta/') ruta = '/cuenta.html';
   const esImagen = ruta.startsWith('/img/') || ruta === '/favicon.svg';
   servirArchivo(req, res, PUBLIC_DIR, ruta.slice(1), esImagen ? 'public, max-age=86400' : 'no-cache');
 });

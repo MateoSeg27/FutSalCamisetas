@@ -43,6 +43,7 @@ almacenamiento `productos`. Render solo ejecuta la página; si se reinicia no se
 ## Archivos
 
 - `server.js`: servidor.
+- `cuentas.js` y `correo.js`: cuentas de clientes y envío de emails.
 - `almacen/supabase.js` y `almacen/archivo.js`: dónde se guardan los datos.
 - `public/`: la página (`index.html`, `admin.html`, `css/`, `js/`, `img/`).
 - `image.png`: logo original.
@@ -50,6 +51,9 @@ almacenamiento `productos`. Render solo ejecuta la página; si se reinicia no se
 ## Publicación (Render + Supabase)
 
 - Código en GitHub: cada cambio que se sube se publica solo en Render.
+- Para los códigos por email (cuentas de clientes): `BREVO_API_KEY` y `EMAIL_REMITENTE`
+  (clave de API de Brevo y el mail remitente confirmado ahí). Sin eso, en la computadora
+  el código aparece en la ventana negra en vez de enviarse.
 - Variables en Render: `SUPABASE_URL` y `SUPABASE_SECRET_KEY` (la clave secreta de
   Supabase → Project Settings → API Keys). Nunca compartir esa clave.
 - Plan gratis de Render: si nadie entra en 15 minutos, la página "se duerme" y la primera

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mi cuenta | FutSal Camisetas</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0d0d0d">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/estilos.css">
+</head>
+<body class="panel-body">
+
+<header class="cabecera">
+  <div class="contenedor">
+    <a class="marca" href="/" aria-label="FutSal Camisetas, inicio">
+      <img src="/img/logo.svg" alt="" width="51" height="38">
+      <span>FutSal <b>Camisetas</b></span>
+    </a>
+    <nav class="nav" aria-label="Principal">
+      <a href="/#catalogo" style="display:inline-block">Volver a la tienda</a>
+    </nav>
+  </div>
+</header>
+
+<main class="cuenta-main">
+  <p class="tenue" id="cargando" style="text-align:center">Cargando...</p>
+
+  <!-- Ingresar -->
+  <form class="cuenta-caja" id="vista-ingresar" novalidate hidden>
+    <h1>Ingresar</h1>
+    <div class="aviso" data-aviso role="alert" hidden></div>
+    <div class="campo">
+      <label for="in-email">Email</label>
+      <input type="email" id="in-email" autocomplete="email" maxlength="120" required>
+    </div>
+    <div class="campo">
+      <label for="in-password">Contraseña</label>
+      <input type="password" id="in-password" autocomplete="current-password" maxlength="100" required>
+    </div>
+    <button class="btn btn-ancho" type="submit">Ingresar</button>
+    <p class="cuenta-links">
+      <button type="button" class="enlace" data-ir="recuperar">Olvidé mi contraseña</button>
+      <span>¿No tenés cuenta? <button type="button" class="enlace" data-ir="registro">Crear cuenta</button></span>
+    </p>
+  </form>
+
+  <!-- Crear cuenta -->
+  <form class="cuenta-caja ancha" id="vista-registro" novalidate hidden>
+    <h1>Crear cuenta</h1>
+    <div class="aviso" data-aviso role="alert" hidden></div>
+    <div class="fila-2">
+      <div class="campo">
+        <label for="re-nombre">Nombre</label>
+        <input type="text" id="re-nombre" autocomplete="given-name" maxlength="60" required>
+      </div>
+      <div class="campo">
+        <label for="re-apellido">Apellido</label>
+        <input type="text" id="re-apellido" autocomplete="family-name" maxlength="60" required>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="re-email">Email</label>
+      <input type="email" id="re-email" autocomplete="email" maxlength="120" required>
+      <small>Te vamos a enviar un código para confirmarlo.</small>
+    </div>
+    <div class="fila-2">
+      <div class="campo">
+        <label for="re-password">Contraseña</label>
+        <input type="password" id="re-password" autocomplete="new-password" maxlength="100" required>
+        <small>Mínimo 8 caracteres.</small>
+      </div>
+      <div class="campo">
+        <label for="re-password2">Repetir contraseña</label>
+        <input type="password" id="re-password2" autocomplete="new-password" maxlength="100" required>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="re-direccion">Dirección (calle y número)</label>
+      <input type="text" id="re-direccion" autocomplete="street-address" maxlength="200" required>
+    </div>
+    <div class="fila-2">
+      <div class="campo">
+        <label for="re-localidad">Localidad</label>
+        <input type="text" id="re-localidad" autocomplete="address-level2" maxlength="80" required>
+      </div>
+      <div class="campo">
+        <label for="re-provincia">Provincia</label>
+        <select id="re-provincia" autocomplete="address-level1" required></select>
+      </div>
+    </div>
+    <div class="fila-2">
+      <div class="campo">
+        <label for="re-cp">Código postal</label>
+        <input type="text" id="re-cp" autocomplete="postal-code" maxlength="8" required>
+      </div>
+      <div class="campo">
+        <label for="re-telefono">Teléfono (opcional)</label>
+        <input type="tel" id="re-telefono" autocomplete="tel" maxlength="30">
+      </div>
+    </div>
+    <button class="btn btn-ancho" type="submit">Crear cuenta</button>
+    <p class="cuenta-links"><span>¿Ya tenés cuenta? <button type="button" class="enlace" data-ir="ingresar">Ingresar</button></span></p>
+  </form>
+
+  <!-- Confirmar email -->
+  <form class="cuenta-caja" id="vista-verificar" novalidate hidden>
+    <h1>Confirmá tu email</h1>
+    <p class="tenue cuenta-intro">Te enviamos un código de 6 números a <strong id="ve-email"></strong>. Si no lo ves, revisá la carpeta de spam.</p>
+    <div class="aviso" data-aviso role="alert" hidden></div>
+    <div class="campo">
+      <label for="ve-codigo">Código</label>
+      <input type="text" id="ve-codigo" class="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>
+    </div>
+    <button class="btn btn-ancho" type="submit">Confirmar</button>
+    <p class="cuenta-links">
+      <button type="button" class="enlace" id="ve-reenviar">Enviar otro código</button>
+      <button type="button" class="enlace" data-ir="registro">Cambiar el email</button>
+    </p>
+  </form>
+
+  <!-- Recuperar contraseña -->
+  <form class="cuenta-caja" id="vista-recuperar" novalidate hidden>
+    <h1>Recuperar contraseña</h1>
+    <p class="tenue cuenta-intro">Escribí el email de tu cuenta y te enviamos un código para elegir una contraseña nueva.</p>
+    <div class="aviso" data-aviso role="alert" hidden></div>
+    <div class="campo">
+      <label for="rc-email">Email</label>
+      <input type="email" id="rc-email" autocomplete="email" maxlength="120" required>
+    </div>
+    <button class="btn btn-ancho" type="submit">Enviar código</button>
+    <p class="cuenta-links"><button type="button" class="enlace" data-ir="ingresar">Volver a ingresar</button></p>
+  </form>
+
+  <!-- Contraseña nueva -->
+  <form class="cuenta-caja" id="vista-restablecer" novalidate hidden>
+    <h1>Contraseña nueva</h1>
+    <p class="tenue cuenta-intro">Si hay una cuenta con <strong id="rs-email"></strong>, te llegó un código de 6 números.</p>
+    <div class="aviso" data-aviso role="alert" hidden></div>
+    <div class="campo">
+      <label for="rs-codigo">Código</label>
+      <input type="text" id="rs-codigo" class="codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>
+    </div>
+    <div class="campo">
+      <label for="rs-nueva">Contraseña nueva</label>
+      <input type="password" id="rs-nueva" autocomplete="new-password" maxlength="100" required>
+      <small>Mínimo 8 caracteres.</small>
+    </div>
+    <div class="campo">
+      <label for="rs-nueva2">Repetir contraseña nueva</label>
+      <input type="password" id="rs-nueva2" autocomplete="new-password" maxlength="100" required>
+    </div>
+    <button class="btn btn-ancho" type="submit">Guardar contraseña</button>
+    <p class="cuenta-links"><button type="button" class="enlace" data-ir="ingresar">Volver a ingresar</button></p>
+  </form>
+
+  <!-- Mi cuenta -->
+  <div id="vista-perfil" hidden>
+    <div class="panel-cab" style="max-width:720px;margin:0 auto 18px">
+      <h1 style="font-size:24px">Hola, <span id="pf-saludo"></span></h1>
+      <button class="btn btn-linea btn-chico" type="button" id="pf-salir">Cerrar sesión</button>
+    </div>
+
+    <form class="cuenta-caja ancha" id="form-datos" novalidate>
+      <h2>Mis datos</h2>
+      <div class="aviso" data-aviso role="status" hidden></div>
+      <div class="campo">
+        <label for="pf-email">Email</label>
+        <input type="email" id="pf-email" disabled>
+      </div>
+      <div class="fila-2">
+        <div class="campo">
+          <label for="pf-nombre">Nombre</label>
+          <input type="text" id="pf-nombre" autocomplete="given-name" maxlength="60" required>
+        </div>
+        <div class="campo">
+          <label for="pf-apellido">Apellido</label>
+          <input type="text" id="pf-apellido" autocomplete="family-name" maxlength="60" required>
+        </div>
+      </div>
+      <div class="campo">
+        <label for="pf-direccion">Dirección (calle y número)</label>
+        <input type="text" id="pf-direccion" autocomplete="street-address" maxlength="200" required>
+      </div>
+      <div class="fila-2">
+        <div class="campo">
+          <label for="pf-localidad">Localidad</label>
+          <input type="text" id="pf-localidad" autocomplete="address-level2" maxlength="80" required>
+        </div>
+        <div class="campo">
+          <label for="pf-provincia">Provincia</label>
+          <select id="pf-provincia" autocomplete="address-level1" required></select>
+        </div>
+      </div>
+      <div class="fila-2">
+        <div class="campo">
+          <label for="pf-cp">Código postal</label>
+          <input type="text" id="pf-cp" autocomplete="postal-code" maxlength="8" required>
+        </div>
+        <div class="campo">
+          <label for="pf-telefono">Teléfono (opcional)</label>
+          <input type="tel" id="pf-telefono" autocomplete="tel" maxlength="30">
+        </div>
+      </div>
+      <button class="btn" type="submit">Guardar cambios</button>
+    </form>
+
+    <form class="cuenta-caja ancha" id="form-clave" novalidate>
+      <h2>Cambiar contraseña</h2>
+      <div class="aviso" data-aviso role="status" hidden></div>
+      <div class="campo">
+        <label for="cl-actual">Contraseña actual</label>
+        <input type="password" id="cl-actual" autocomplete="current-password" maxlength="100" required>
+      </div>
+      <div class="fila-2">
+        <div class="campo">
+          <label for="cl-nueva">Contraseña nueva</label>
+          <input type="password" id="cl-nueva" autocomplete="new-password" maxlength="100" required>
+          <small>Mínimo 8 caracteres.</small>
+        </div>
+        <div class="campo">
+          <label for="cl-nueva2">Repetir contraseña nueva</label>
+          <input type="password" id="cl-nueva2" autocomplete="new-password" maxlength="100" required>
+        </div>
+      </div>
+      <button class="btn" type="submit">Cambiar contraseña</button>
+    </form>
+  </div>
+</main>
+
+<script src="/js/cuenta.js"></script>
+</body>
+</html>

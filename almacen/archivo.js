@@ -44,6 +44,9 @@ function crear(dataDir) {
       db.productos = db.productos || [];
       db.mensajes = db.mensajes || [];
       db.config = db.config || null;
+      db.clientes = db.clientes || [];
+      db.codigos = db.codigos || {};
+      db.sesionesClientes = db.sesionesClientes || {};
       db.productos.forEach((p) => {
         if (!Array.isArray(p.imagenes)) p.imagenes = p.imagen ? [p.imagen] : [];
       });
@@ -129,6 +132,46 @@ function crear(dataDir) {
       if (c) { Object.assign(c, campos); guardar(); }
     },
     async borrarCategoria(id) { db.categorias = db.categorias.filter((c) => c.id !== id); guardar(); },
+
+    /* ---- Clientes ---- */
+    async clientePorEmail(email) { return copia(db.clientes.find((c) => c.email === email) || null); },
+    async clientePorId(id) { return copia(db.clientes.find((c) => c.id === id) || null); },
+    async crearCliente(c) { db.clientes.push(copia(c)); guardar(); },
+    async actualizarCliente(id, campos) {
+      const c = db.clientes.find((x) => x.id === id);
+      if (c) { Object.assign(c, campos); guardar(); }
+    },
+    async listarClientes() {
+      return copia(db.clientes).sort((a, b) => b.creado - a.creado).map((c) => { delete c.salt; delete c.hash; return c; });
+    },
+
+    async guardarCodigo(clienteId, tipo, codigoHash, expira) {
+      db.codigos[clienteId + ':' + tipo] = { codigoHash, expira, intentos: 0 };
+      guardar();
+    },
+    async obtenerCodigo(clienteId, tipo) { return copia(db.codigos[clienteId + ':' + tipo] || null); },
+    async sumarIntentoCodigo(clienteId, tipo) {
+      const c = db.codigos[clienteId + ':' + tipo];
+      if (c) { c.intentos++; guardar(); }
+    },
+    async borrarCodigo(clienteId, tipo) { delete db.codigos[clienteId + ':' + tipo]; guardar(); },
+
+    async crearSesionCliente(tokenHash, clienteId, expira) { db.sesionesClientes[tokenHash] = { clienteId, expira }; guardar(); },
+    async obtenerSesionCliente(tokenHash) { return copia(db.sesionesClientes[tokenHash] || null); },
+    async borrarSesionCliente(tokenHash) {
+      if (db.sesionesClientes[tokenHash]) { delete db.sesionesClientes[tokenHash]; guardar(); }
+    },
+    async borrarSesionesDeCliente(clienteId, exceptoHash) {
+      for (const k of Object.keys(db.sesionesClientes)) {
+        if (db.sesionesClientes[k].clienteId === clienteId && k !== exceptoHash) delete db.sesionesClientes[k];
+      }
+      guardar();
+    },
+    async limpiarSesionesClientes() {
+      const ahora = Date.now();
+      for (const k of Object.keys(db.sesionesClientes)) if (db.sesionesClientes[k].expira < ahora) delete db.sesionesClientes[k];
+      guardar();
+    },
 
     /* ---- Mensajes ---- */
     async listarMensajes() { return copia(db.mensajes.slice(0, 500)); },

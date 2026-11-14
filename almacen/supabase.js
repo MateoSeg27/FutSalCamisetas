@@ -150,6 +150,64 @@ function crear(url, clave) {
       ok(await sb.from('categorias').delete().eq('id', id));
     },
 
+    /* ---- Clientes ---- */
+    async clientePorEmail(email) {
+      const f = ok(await sb.from('clientes').select('*').eq('email', email).maybeSingle());
+      return f ? Object.assign(f, { creado: aMs(f.creado) }) : null;
+    },
+    async clientePorId(id) {
+      const f = ok(await sb.from('clientes').select('*').eq('id', id).maybeSingle());
+      return f ? Object.assign(f, { creado: aMs(f.creado) }) : null;
+    },
+    async crearCliente(c) {
+      ok(await sb.from('clientes').insert(Object.assign({}, c, { creado: new Date(c.creado).toISOString() })));
+    },
+    async actualizarCliente(id, campos) {
+      ok(await sb.from('clientes').update(campos).eq('id', id));
+    },
+    async listarClientes() {
+      const filas = ok(await sb.from('clientes')
+        .select('id,email,nombre,apellido,direccion,localidad,provincia,cp,telefono,verificado,creado')
+        .order('creado', { ascending: false }).limit(1000));
+      return filas.map((f) => Object.assign(f, { creado: aMs(f.creado) }));
+    },
+
+    async guardarCodigo(clienteId, tipo, codigoHash, expira) {
+      ok(await sb.from('codigos').upsert({
+        cliente_id: clienteId, tipo, codigo_hash: codigoHash, expira: new Date(expira).toISOString(), intentos: 0,
+      }));
+    },
+    async obtenerCodigo(clienteId, tipo) {
+      const f = ok(await sb.from('codigos').select('*').eq('cliente_id', clienteId).eq('tipo', tipo).maybeSingle());
+      return f ? { codigoHash: f.codigo_hash, expira: aMs(f.expira), intentos: f.intentos } : null;
+    },
+    async sumarIntentoCodigo(clienteId, tipo) {
+      const f = ok(await sb.from('codigos').select('intentos').eq('cliente_id', clienteId).eq('tipo', tipo).maybeSingle());
+      if (f) ok(await sb.from('codigos').update({ intentos: f.intentos + 1 }).eq('cliente_id', clienteId).eq('tipo', tipo));
+    },
+    async borrarCodigo(clienteId, tipo) {
+      ok(await sb.from('codigos').delete().eq('cliente_id', clienteId).eq('tipo', tipo));
+    },
+
+    async crearSesionCliente(tokenHash, clienteId, expira) {
+      ok(await sb.from('sesiones_clientes').insert({ token_hash: tokenHash, cliente_id: clienteId, expira: new Date(expira).toISOString() }));
+    },
+    async obtenerSesionCliente(tokenHash) {
+      const f = ok(await sb.from('sesiones_clientes').select('*').eq('token_hash', tokenHash).maybeSingle());
+      return f ? { clienteId: f.cliente_id, expira: aMs(f.expira) } : null;
+    },
+    async borrarSesionCliente(tokenHash) {
+      ok(await sb.from('sesiones_clientes').delete().eq('token_hash', tokenHash));
+    },
+    async borrarSesionesDeCliente(clienteId, exceptoHash) {
+      let q = sb.from('sesiones_clientes').delete().eq('cliente_id', clienteId);
+      if (exceptoHash) q = q.neq('token_hash', exceptoHash);
+      ok(await q);
+    },
+    async limpiarSesionesClientes() {
+      ok(await sb.from('sesiones_clientes').delete().lt('expira', new Date().toISOString()));
+    },
+
     /* ---- Mensajes ---- */
     async listarMensajes() {
       return ok(await sb.from('mensajes').select('*').order('fecha', { ascending: false }).limit(500)).map(mensajeDeFila);

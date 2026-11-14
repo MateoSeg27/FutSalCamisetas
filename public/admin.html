@@ -51,6 +51,7 @@
       <button class="pestana" role="tab" type="button" data-pestana="productos" aria-selected="true">Productos</button>
       <button class="pestana" role="tab" type="button" data-pestana="mensajes" aria-selected="false">Mensajes <span class="burbuja" id="burbuja-mensajes" hidden>0</span></button>
       <button class="pestana" role="tab" type="button" data-pestana="categorias" aria-selected="false">Categorías</button>
+      <button class="pestana" role="tab" type="button" data-pestana="clientes" aria-selected="false">Clientes</button>
       <button class="pestana" role="tab" type="button" data-pestana="config" aria-selected="false">Datos del negocio</button>
       <button class="pestana" role="tab" type="button" data-pestana="usuarios" aria-selected="false" id="pestana-usuarios" hidden>Usuarios</button>
       <button class="pestana" role="tab" type="button" data-pestana="cuenta" aria-selected="false">Mi cuenta</button>
@@ -104,6 +105,18 @@
           </div>
           <button class="btn" type="submit">Agregar categoría</button>
         </form>
+      </section>
+
+      <!-- Clientes -->
+      <section id="sec-clientes" hidden>
+        <div class="panel-cab"><h2>Clientes registrados <span class="tenue" id="cuenta-clientes"></span></h2></div>
+        <div class="tabla-envoltura">
+          <table>
+            <thead><tr><th>Cliente</th><th>Email</th><th class="ocultar-movil">Dirección</th><th class="ocultar-movil">Teléfono</th><th>Estado</th><th class="ocultar-movil">Alta</th></tr></thead>
+            <tbody id="tabla-clientes"></tbody>
+          </table>
+        </div>
+        <p class="vacio" id="sin-clientes" hidden>Todavía no hay clientes registrados. Aparecen acá cuando crean su cuenta en la tienda.</p>
       </section>
 
       <!-- Datos del negocio -->
