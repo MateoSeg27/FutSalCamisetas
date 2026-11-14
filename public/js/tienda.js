@@ -16,6 +16,7 @@
     orden: 'destacados',
     carrito: leerCarrito(),
     actual: null,      // producto abierto en el dialogo
+    foto: 0,           // foto mostrada en el dialogo
     talle: null,
     cantidad: 1
   };
@@ -131,9 +132,16 @@
 
     lista.forEach(function (p) {
       var agotado = stockTotal(p) === 0;
-      var img = crear('img', { src: p.imagen || SIN_IMAGEN, alt: '', loading: 'lazy' });
+      var fotos = fotosDe(p);
+      var img = crear('img', { src: fotos[0], alt: '', loading: 'lazy' });
       imagenSegura(img);
       var marco = crear('div', { clase: 'tarjeta-img' }, [img]);
+      if (fotos.length > 1) {
+        // segunda foto al pasar el mouse
+        var alt = crear('img', { src: fotos[1], alt: '', loading: 'lazy', clase: 'img-alt' });
+        alt.addEventListener('error', function () { alt.remove(); });
+        marco.appendChild(alt);
+      }
       if (agotado) marco.appendChild(crear('span', { clase: 'etiqueta-img agotado', texto: 'Sin stock' }));
       else if (p.destacado) marco.appendChild(crear('span', { clase: 'etiqueta-img', texto: 'Destacado' }));
 
@@ -158,9 +166,8 @@
     var conStock = p.talles.filter(function (t) { return t.stock > 0; });
     estado.talle = p.talles.length === 0 ? '' : (conStock.length === 1 ? conStock[0].talle : null);
 
-    var img = $('p-imagen');
-    img.src = p.imagen || SIN_IMAGEN;
-    img.alt = p.nombre;
+    estado.foto = 0;
+    pintarFotos();
     $('p-categoria').textContent = p.categoria;
     $('p-nombre').textContent = p.nombre;
     $('p-precio').textContent = precioFmt.format(p.precio);
@@ -169,6 +176,40 @@
     $('p-talles-titulo').hidden = p.talles.length === 0;
     pintarDetalle();
     $('dlg-producto').showModal();
+  }
+
+  function fotosDe(p) {
+    var fotos = (p.imagenes && p.imagenes.length) ? p.imagenes : (p.imagen ? [p.imagen] : []);
+    return fotos.length ? fotos : [SIN_IMAGEN];
+  }
+
+  function pintarFotos() {
+    var p = estado.actual;
+    var fotos = fotosDe(p);
+    var i = estado.foto;
+    var img = $('p-imagen');
+    img.src = fotos[i];
+    img.alt = p.nombre + (fotos.length > 1 ? ' (foto ' + (i + 1) + ' de ' + fotos.length + ')' : '');
+    $('p-anterior').hidden = fotos.length < 2;
+    $('p-siguiente').hidden = fotos.length < 2;
+
+    var cont = $('p-miniaturas');
+    cont.textContent = '';
+    cont.hidden = fotos.length < 2;
+    if (fotos.length < 2) return;
+    fotos.forEach(function (url, k) {
+      var mini = crear('img', { src: url, alt: '' });
+      imagenSegura(mini);
+      var b = crear('button', { type: 'button', clase: 'miniatura', 'aria-label': 'Ver foto ' + (k + 1), 'aria-current': String(k === i) }, [mini]);
+      b.addEventListener('click', function () { estado.foto = k; pintarFotos(); });
+      cont.appendChild(b);
+    });
+  }
+
+  function cambiarFoto(delta) {
+    var total = fotosDe(estado.actual).length;
+    estado.foto = (estado.foto + delta + total) % total;
+    pintarFotos();
   }
 
   function pintarDetalle() {
@@ -439,6 +480,22 @@
     var dlg = $('dlg-producto');
     dlg.querySelector('[data-cerrar]').addEventListener('click', function () { dlg.close(); });
     dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+    $('p-anterior').addEventListener('click', function () { cambiarFoto(-1); });
+    $('p-siguiente').addEventListener('click', function () { cambiarFoto(1); });
+    dlg.addEventListener('keydown', function (e) {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.key === 'ArrowLeft' && fotosDe(estado.actual).length > 1) cambiarFoto(-1);
+      if (e.key === 'ArrowRight' && fotosDe(estado.actual).length > 1) cambiarFoto(1);
+    });
+    // deslizar con el dedo en el celular
+    var inicioX = null;
+    $('p-imagen').parentNode.addEventListener('touchstart', function (e) { inicioX = e.touches[0].clientX; }, { passive: true });
+    $('p-imagen').parentNode.addEventListener('touchend', function (e) {
+      if (inicioX === null) return;
+      var dx = e.changedTouches[0].clientX - inicioX;
+      inicioX = null;
+      if (Math.abs(dx) > 40 && fotosDe(estado.actual).length > 1) cambiarFoto(dx < 0 ? 1 : -1);
+    });
     $('p-menos').addEventListener('click', function () { estado.cantidad--; pintarDetalle(); });
     $('p-mas').addEventListener('click', function () { estado.cantidad++; pintarDetalle(); });
     $('p-agregar').addEventListener('click', agregarAlCarrito);

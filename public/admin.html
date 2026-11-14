@@ -228,16 +228,10 @@
     <div class="dialogo-cuerpo">
       <div class="aviso aviso-error" id="producto-error" role="alert" hidden></div>
 
-      <p class="etiqueta" style="margin-bottom:6px">Foto</p>
-      <div class="editor-imagen">
-        <img id="pr-vista" src="/img/sin-imagen.svg" alt="Vista previa de la foto">
-        <div>
-          <input type="file" id="pr-archivo" accept="image/jpeg,image/png,image/webp" class="oculto-visual">
-          <label for="pr-archivo" class="btn btn-linea btn-chico" id="pr-elegir">Elegir foto</label>
-          <button type="button" class="enlace" id="pr-quitar-foto" style="margin-left:10px" hidden>Quitar</button>
-          <p class="tenue" style="margin-top:6px">JPG, PNG o WEBP. Mejor si es cuadrada.</p>
-        </div>
-      </div>
+      <p class="etiqueta" style="margin-bottom:6px">Fotos <span class="tenue" id="pr-fotos-cuenta">(0 de 5)</span></p>
+      <div class="galeria-editor" id="pr-fotos"></div>
+      <input type="file" id="pr-archivo" accept="image/jpeg,image/png,image/webp" multiple class="oculto-visual">
+      <p class="tenue" style="margin:6px 0 16px">Hasta 5 fotos (JPG, PNG o WEBP), mejor si son cuadradas. La primera es la portada: usá las flechas para cambiar el orden.</p>
 
       <div class="campo">
         <label for="pr-nombre">Nombre</label>

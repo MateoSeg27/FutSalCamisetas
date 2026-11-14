@@ -26,12 +26,14 @@ function crear(url, clave) {
 
   const productoDeFila = (f) => ({
     id: f.id, nombre: f.nombre, categoria: f.categoria, descripcion: f.descripcion,
-    precio: f.precio, imagen: f.imagen, talles: f.talles || [],
+    precio: f.precio, imagen: f.imagen,
+    imagenes: (Array.isArray(f.imagenes) && f.imagenes.length) ? f.imagenes : (f.imagen ? [f.imagen] : []),
+    talles: f.talles || [],
     destacado: f.destacado, activo: f.activo, creado: aMs(f.creado),
   });
   const filaDeProducto = (p) => ({
     id: p.id, nombre: p.nombre, categoria: p.categoria, descripcion: p.descripcion,
-    precio: p.precio, imagen: p.imagen, talles: p.talles,
+    precio: p.precio, imagen: p.imagen, imagenes: p.imagenes, talles: p.talles,
     destacado: p.destacado, activo: p.activo,
     creado: new Date(p.creado).toISOString(),
   });

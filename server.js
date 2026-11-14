@@ -22,6 +22,7 @@ const DETRAS_DE_PROXY = !!(process.env.RENDER || process.env.TRUST_PROXY);
 const SESSION_MS = 7 * 24 * 60 * 60 * 1000;   // 7 dias
 const MAX_JSON_BYTES = 100 * 1024;            // 100 KB para datos normales
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;     // 8 MB para subir imagenes
+const MAX_IMAGENES = 5;                       // fotos por producto
 
 /* ------------------------------------------------------------------ */
 /* Almacenamiento                                                      */
@@ -94,7 +95,7 @@ function productosDeEjemplo() {
       'Short deportivo de ejemplo, color blanco.'],
   ];
   return lista.map((p, i) => ({
-    id: nuevoId(), nombre: p[0], categoria: p[1], precio: p[2], imagen: '/img/productos/' + p[3],
+    id: nuevoId(), nombre: p[0], categoria: p[1], precio: p[2], imagen: '/img/productos/' + p[3], imagenes: ['/img/productos/' + p[3]],
     talles: talles(p[4]), destacado: p[5], activo: true, descripcion: p[6], creado: ahora - i * 1000,
   }));
 }
@@ -329,8 +330,13 @@ function validarProducto(data) {
   const precio = Number(data.precio);
   if (!Number.isFinite(precio) || precio < 0 || precio > 1e9) throw new ErrorHttp(400, 'El precio no es válido.');
 
-  const imagen = texto(data.imagen, 300, 'la imagen', false);
-  if (!imagenValida(imagen)) throw new ErrorHttp(400, 'La imagen no es válida.');
+  let imagenes = data.imagenes;
+  if (imagenes === undefined) imagenes = data.imagen ? [data.imagen] : [];
+  if (!Array.isArray(imagenes)) throw new ErrorHttp(400, 'Las imágenes no son válidas.');
+  if (imagenes.length > MAX_IMAGENES) throw new ErrorHttp(400, 'Máximo ' + MAX_IMAGENES + ' fotos por producto.');
+  imagenes = imagenes.map((i) => texto(i, 300, 'la imagen', true));
+  if (!imagenes.every(imagenValida)) throw new ErrorHttp(400, 'Alguna de las imágenes no es válida.');
+  if (new Set(imagenes).size !== imagenes.length) throw new ErrorHttp(400, 'Hay una foto repetida.');
 
   if (!Array.isArray(data.talles)) throw new ErrorHttp(400, 'Los talles no son válidos.');
   if (data.talles.length > 30) throw new ErrorHttp(400, 'Demasiados talles (máximo 30).');
@@ -347,7 +353,8 @@ function validarProducto(data) {
   return {
     nombre, categoria, descripcion,
     precio: Math.round(precio),
-    imagen,
+    imagen: imagenes[0] || '',
+    imagenes,
     talles,
     destacado: !!data.destacado,
     activo: data.activo === undefined ? true : !!data.activo,
@@ -369,10 +376,14 @@ function nombreCategoria(valor) {
   return nombre.charAt(0).toUpperCase() + nombre.slice(1);
 }
 
-async function borrarImagenSiNoSeUsa(imagen) {
-  if (!imagen || imagen.startsWith('/img/')) return;
-  if ((await almacen.contarProductosConImagen(imagen)) > 0) return;
-  try { await almacen.borrarImagen(imagen); } catch (e) { console.error('No se pudo borrar la imagen:', e.message); }
+// Borra del almacenamiento las fotos que dejo de usar un producto
+// (cada foto subida pertenece a un solo producto; las de ejemplo en /img/ no se tocan)
+async function borrarImagenesQuitadas(anteriores, actuales) {
+  const quedan = new Set(actuales || []);
+  for (const url of anteriores || []) {
+    if (!url || url.startsWith('/img/') || quedan.has(url)) continue;
+    try { await almacen.borrarImagen(url); } catch (e) { console.error('No se pudo borrar la imagen:', e.message); }
+  }
 }
 
 function tipoDeImagen(buf) {
@@ -487,12 +498,12 @@ async function manejarApi(req, res, ruta) {
       const nuevo = Object.assign(validarProducto(await leerJson(req, MAX_JSON_BYTES)), { id: anterior.id, creado: anterior.creado });
       nuevo.categoria = await asegurarCategoria(nombreCategoria(nuevo.categoria));
       await almacen.guardarProducto(nuevo);
-      if (anterior.imagen !== nuevo.imagen) await borrarImagenSiNoSeUsa(anterior.imagen);
+      await borrarImagenesQuitadas(anterior.imagenes, nuevo.imagenes);
       return enviarJson(res, 200, nuevo);
     }
     if (metodo === 'DELETE' && id) {
       await almacen.borrarProducto(id);
-      await borrarImagenSiNoSeUsa(anterior.imagen);
+      await borrarImagenesQuitadas(anterior.imagenes, []);
       return enviarJson(res, 200, { ok: true });
     }
   }

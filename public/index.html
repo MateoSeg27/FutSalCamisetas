@@ -124,7 +124,18 @@
   </div>
   <div class="dialogo-cuerpo">
     <div class="producto-detalle">
-      <div class="foto"><img id="p-imagen" src="/img/sin-imagen.svg" alt=""></div>
+      <div>
+        <div class="foto">
+          <img id="p-imagen" src="/img/sin-imagen.svg" alt="">
+          <button class="foto-nav anterior" type="button" id="p-anterior" aria-label="Foto anterior" hidden>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button class="foto-nav siguiente" type="button" id="p-siguiente" aria-label="Foto siguiente" hidden>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+        <div class="miniaturas" id="p-miniaturas" role="group" aria-label="Fotos del producto"></div>
+      </div>
       <div>
         <p class="tarjeta-cat" id="p-categoria"></p>
         <h3 id="p-nombre"></h3>

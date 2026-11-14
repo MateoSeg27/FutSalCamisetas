@@ -15,8 +15,7 @@
     usuarios: [],
     categorias: [],
     editando: null,       // producto en edicion (null = nuevo)
-    imagenActual: '',     // url ya guardada
-    imagenNueva: null     // dataURL lista para subir
+    fotos: []             // [{ url }] ya guardadas o [{ datos }] pendientes de subir (dataURL)
   };
 
   /* ---------- Utilidades ---------- */
@@ -262,16 +261,79 @@
     });
   }
 
-  function vistaImagen() {
-    $('pr-vista').src = estado.imagenNueva || estado.imagenActual || SIN_IMAGEN;
-    $('pr-quitar-foto').hidden = !(estado.imagenNueva || estado.imagenActual);
-    $('pr-elegir').textContent = (estado.imagenNueva || estado.imagenActual) ? 'Cambiar foto' : 'Elegir foto';
+  var MAX_FOTOS = 5;
+
+  function pintarFotos() {
+    var cont = $('pr-fotos');
+    cont.textContent = '';
+    var fotos = estado.fotos;
+    $('pr-fotos-cuenta').textContent = '(' + fotos.length + ' de ' + MAX_FOTOS + ')';
+
+    fotos.forEach(function (f, i) {
+      var img = crear('img', { src: f.datos || f.url, alt: 'Foto ' + (i + 1) });
+      img.addEventListener('error', function () { if (img.getAttribute('src') !== SIN_IMAGEN) img.src = SIN_IMAGEN; });
+      var izq = crear('button', { type: 'button', texto: '←', 'aria-label': 'Mover la foto ' + (i + 1) + ' a la izquierda' });
+      var der = crear('button', { type: 'button', texto: '→', 'aria-label': 'Mover la foto ' + (i + 1) + ' a la derecha' });
+      var quitar = crear('button', { type: 'button', texto: '✕', 'aria-label': 'Quitar la foto ' + (i + 1) });
+      izq.disabled = i === 0;
+      der.disabled = i === fotos.length - 1;
+      izq.addEventListener('click', function () { moverFoto(i, -1); });
+      der.addEventListener('click', function () { moverFoto(i, 1); });
+      quitar.addEventListener('click', function () { estado.fotos.splice(i, 1); pintarFotos(); });
+      cont.appendChild(crear('div', { clase: 'foto-item' }, [
+        img,
+        i === 0 ? crear('span', { clase: 'portada-tag', texto: 'Portada' }) : null,
+        crear('div', { clase: 'foto-acc' }, [izq, quitar, der])
+      ]));
+    });
+
+    if (fotos.length < MAX_FOTOS) {
+      var agregar = crear('label', { 'for': 'pr-archivo', clase: 'foto-agregar' }, [
+        crear('span', { texto: '+', 'aria-hidden': 'true' }),
+        document.createTextNode(fotos.length ? 'Agregar' : 'Agregar fotos')
+      ]);
+      agregar.tabIndex = 0;
+      agregar.setAttribute('role', 'button');
+      agregar.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('pr-archivo').click(); }
+      });
+      cont.appendChild(agregar);
+    }
+  }
+
+  function moverFoto(i, delta) {
+    var j = i + delta;
+    if (j < 0 || j >= estado.fotos.length) return;
+    var f = estado.fotos.splice(i, 1)[0];
+    estado.fotos.splice(j, 0, f);
+    pintarFotos();
+  }
+
+  function agregarArchivos(archivos) {
+    var lugar = MAX_FOTOS - estado.fotos.length;
+    var lista = Array.prototype.slice.call(archivos);
+    if (!lista.length) return;
+    if (lista.length > lugar) {
+      aviso('producto-error', 'Máximo ' + MAX_FOTOS + ' fotos por producto. Se agregaron solo ' + Math.max(lugar, 0) + '.');
+      lista = lista.slice(0, Math.max(lugar, 0));
+    } else {
+      aviso('producto-error', '');
+    }
+    // se procesan en orden para respetar el orden elegido
+    lista.reduce(function (cadena, archivo) {
+      return cadena.then(function () {
+        return prepararImagen(archivo).then(function (dataUrl) {
+          if (estado.fotos.length < MAX_FOTOS) estado.fotos.push({ datos: dataUrl });
+          pintarFotos();
+        }).catch(function (err) { aviso('producto-error', err.message); });
+      });
+    }, Promise.resolve());
   }
 
   function abrirProducto(p) {
     estado.editando = p || null;
-    estado.imagenActual = p ? p.imagen : '';
-    estado.imagenNueva = null;
+    estado.fotos = (p ? (p.imagenes && p.imagenes.length ? p.imagenes : (p.imagen ? [p.imagen] : [])) : [])
+      .map(function (url) { return { url: url }; });
     $('dlg-producto-titulo').textContent = p ? 'Editar producto' : 'Agregar producto';
     $('pr-nombre').value = p ? p.nombre : '';
     llenarSelectCategorias(p ? p.categoria : null);
@@ -285,7 +347,7 @@
     cont.textContent = '';
     (p ? p.talles : []).forEach(function (t) { cont.appendChild(filaTalle(t.talle, t.stock)); });
     pintarRapidos();
-    vistaImagen();
+    pintarFotos();
     aviso('producto-error', '');
     $('dlg-producto').showModal();
     $('pr-nombre').focus();
@@ -350,19 +412,30 @@
     boton.disabled = true;
     boton.textContent = 'Guardando...';
 
-    var subida = estado.imagenNueva
-      ? api('POST', '/api/imagenes', { datos: estado.imagenNueva }).then(function (r) { return r.url; })
-      : Promise.resolve(estado.imagenActual);
+    // Sube una por una las fotos nuevas; las ya subidas no se vuelven a subir si algo falla despues
+    var pendientes = estado.fotos.filter(function (f) { return f.datos; }).length;
+    var hechas = 0;
+    var subida = estado.fotos.reduce(function (cadena, f) {
+      return cadena.then(function () {
+        if (!f.datos) return;
+        hechas++;
+        boton.textContent = 'Subiendo foto ' + hechas + ' de ' + pendientes + '...';
+        return api('POST', '/api/imagenes', { datos: f.datos }).then(function (r) {
+          f.url = r.url;
+          delete f.datos;
+        });
+      });
+    }, Promise.resolve());
 
-    subida.then(function (imagen) {
-      estado.imagenActual = imagen;   // si falla el guardado, no se vuelve a subir
-      estado.imagenNueva = null;
+    subida.then(function () {
+      boton.textContent = 'Guardando...';
+      var imagenes = estado.fotos.map(function (f) { return f.url; });
       var datos = {
         nombre: nombre,
         categoria: categoria,
         precio: Math.round(precio),
         descripcion: $('pr-descripcion').value.trim(),
-        imagen: imagen,
+        imagenes: imagenes,
         talles: talles.map(function (t) { return { talle: t.talle, stock: Number(t.stock) }; }),
         destacado: $('pr-destacado').checked,
         activo: $('pr-activo').checked
@@ -727,19 +800,8 @@
       fila.querySelector('input').focus();
     });
     $('pr-archivo').addEventListener('change', function (e) {
-      var archivo = e.target.files && e.target.files[0];
-      if (!archivo) return;
-      prepararImagen(archivo).then(function (dataUrl) {
-        estado.imagenNueva = dataUrl;
-        aviso('producto-error', '');
-        vistaImagen();
-      }).catch(function (err) { aviso('producto-error', err.message); });
+      agregarArchivos(e.target.files || []);
       e.target.value = '';
-    });
-    $('pr-quitar-foto').addEventListener('click', function () {
-      estado.imagenNueva = null;
-      estado.imagenActual = '';
-      vistaImagen();
     });
 
     $('pr-cat-nueva').addEventListener('click', function () { mostrarCrearCategoria(true); $('pr-cat-nombre').focus(); });

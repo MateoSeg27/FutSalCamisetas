@@ -44,6 +44,9 @@ function crear(dataDir) {
       db.productos = db.productos || [];
       db.mensajes = db.mensajes || [];
       db.config = db.config || null;
+      db.productos.forEach((p) => {
+        if (!Array.isArray(p.imagenes)) p.imagenes = p.imagen ? [p.imagen] : [];
+      });
       if (!Array.isArray(db.categorias)) {
         db.categorias = [];
         db.productos.forEach((p) => {
