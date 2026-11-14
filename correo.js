@@ -1,13 +1,19 @@
 'use strict';
 /*
- * Envio de emails con Brevo (API por HTTPS).
- * Variables: BREVO_API_KEY y EMAIL_REMITENTE.
- * Sin esas variables (pruebas en la computadora) el mensaje se muestra en la consola.
+ * Envio de emails. Dos opciones (se usa la que este configurada):
+ *  1) Gmail mediante Google Apps Script (gratis, 100 emails por dia, sin dominio propio):
+ *     variables GMAIL_SCRIPT_URL y GMAIL_SCRIPT_CLAVE. El script esta en gmail-script.gs.
+ *  2) Brevo (API por HTTPS): variables BREVO_API_KEY y EMAIL_REMITENTE.
+ * Sin ninguna (pruebas en la computadora) el mensaje se muestra en la consola.
  */
+const SCRIPT_URL = process.env.GMAIL_SCRIPT_URL || '';
+const SCRIPT_CLAVE = process.env.GMAIL_SCRIPT_CLAVE || '';
 const API_KEY = process.env.BREVO_API_KEY || '';
 const REMITENTE = process.env.EMAIL_REMITENTE || '';
 
-const configurado = !!(API_KEY && REMITENTE);
+const usarGmail = !!(SCRIPT_URL && SCRIPT_CLAVE);
+const usarBrevo = !usarGmail && !!(API_KEY && REMITENTE);
+const configurado = usarGmail || usarBrevo;
 
 function escapar(t) {
   return String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -19,8 +25,24 @@ async function enviar(para, asunto, texto, html) {
     return;
   }
   const control = new AbortController();
-  const reloj = setTimeout(() => control.abort(), 15000);
+  const reloj = setTimeout(() => control.abort(), 20000);
   try {
+    if (usarGmail) {
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ clave: SCRIPT_CLAVE, para, asunto, texto, html }),
+        redirect: 'follow',
+        signal: control.signal,
+      });
+      const cuerpo = await res.text().catch(() => '');
+      let r = null;
+      try { r = JSON.parse(cuerpo); } catch (e) { /* respuesta no JSON */ }
+      if (!res.ok || !r || !r.ok) {
+        throw new Error('Gmail script: ' + ((r && r.error) || ('HTTP ' + res.status + ' ' + cuerpo.slice(0, 200))));
+      }
+      return;
+    }
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: { 'api-key': API_KEY, 'Content-Type': 'application/json', Accept: 'application/json' },

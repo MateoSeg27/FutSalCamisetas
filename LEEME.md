@@ -51,9 +51,11 @@ almacenamiento `productos`. Render solo ejecuta la página; si se reinicia no se
 ## Publicación (Render + Supabase)
 
 - Código en GitHub: cada cambio que se sube se publica solo en Render.
-- Para los códigos por email (cuentas de clientes): `BREVO_API_KEY` y `EMAIL_REMITENTE`
-  (clave de API de Brevo y el mail remitente confirmado ahí). Sin eso, en la computadora
-  el código aparece en la ventana negra en vez de enviarse.
+- Para los códigos por email (cuentas de clientes), una de estas dos opciones:
+  - **Gmail (recomendado, gratis, 100 por día):** `GMAIL_SCRIPT_URL` y `GMAIL_SCRIPT_CLAVE`.
+    Instrucciones dentro de `gmail-script.gs`.
+  - **Brevo:** `BREVO_API_KEY` y `EMAIL_REMITENTE`.
+  Sin ninguna, en la computadora el código aparece en la ventana negra en vez de enviarse.
 - Variables en Render: `SUPABASE_URL` y `SUPABASE_SECRET_KEY` (la clave secreta de
   Supabase → Project Settings → API Keys). Nunca compartir esa clave.
 - Plan gratis de Render: si nadie entra en 15 minutos, la página "se duerme" y la primera
