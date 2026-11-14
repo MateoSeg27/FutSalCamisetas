@@ -354,7 +354,7 @@
   }
 
   // Achica la foto en el navegador antes de subirla (max 1200 px, JPG)
-  function prepararImagen(archivo) {
+  function prepararImagen(archivo, maximo) {
     return new Promise(function (resolve, reject) {
       if (!/^image\/(jpeg|png|webp)$/.test(archivo.type)) {
         return reject(new Error('Elegí una imagen JPG, PNG o WEBP.'));
@@ -362,7 +362,7 @@
       var url = URL.createObjectURL(archivo);
       var img = new Image();
       img.onload = function () {
-        var max = 1200;
+        var max = maximo || 1200;
         var escala = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
         var w = Math.max(1, Math.round(img.naturalWidth * escala));
         var h = Math.max(1, Math.round(img.naturalHeight * escala));
@@ -704,8 +704,99 @@
 
   var CAMPOS_CONFIG = ['whatsapp', 'instagram', 'direccion', 'horario', 'heroTitulo', 'heroTexto', 'envios'];
 
+  /* ---------- Carrusel de la portada ---------- */
+
+  var MAX_CARRUSEL = 8;
+  var carrusel = [];
+  var carruselOcupado = false;
+
+  function pintarCarrusel() {
+    var cont = $('ca-fotos');
+    cont.textContent = '';
+    $('ca-cuenta').textContent = '(' + carrusel.length + ' de ' + MAX_CARRUSEL + ')';
+    carrusel.forEach(function (url, i) {
+      var img = crear('img', { src: url, alt: 'Imagen ' + (i + 1) + ' del carrusel' });
+      var izq = crear('button', { type: 'button', texto: '←', 'aria-label': 'Mover la imagen ' + (i + 1) + ' antes' });
+      var der = crear('button', { type: 'button', texto: '→', 'aria-label': 'Mover la imagen ' + (i + 1) + ' después' });
+      var quitar = crear('button', { type: 'button', texto: '✕', 'aria-label': 'Quitar la imagen ' + (i + 1) + ' del carrusel' });
+      izq.disabled = i === 0;
+      der.disabled = i === carrusel.length - 1;
+      izq.addEventListener('click', function () { moverCarrusel(i, -1); });
+      der.addEventListener('click', function () { moverCarrusel(i, 1); });
+      quitar.addEventListener('click', function () {
+        confirmar({ titulo: '¿Quitar esta imagen del carrusel?', texto: 'Deja de mostrarse en la portada y se borra.', boton: 'Quitar', peligro: true }).then(function (ok) {
+          if (!ok) return;
+          var nueva = carrusel.slice();
+          nueva.splice(i, 1);
+          guardarCarrusel(nueva, 'Imagen quitada');
+        });
+      });
+      cont.appendChild(crear('div', { clase: 'foto-item' }, [img, crear('div', { clase: 'foto-acc' }, [izq, quitar, der])]));
+    });
+    if (carrusel.length < MAX_CARRUSEL) {
+      var agregar = crear('label', { 'for': 'ca-archivo', clase: 'foto-agregar' }, [
+        crear('span', { texto: '+', 'aria-hidden': 'true' }),
+        document.createTextNode('Agregar imagen')
+      ]);
+      agregar.tabIndex = 0;
+      agregar.setAttribute('role', 'button');
+      agregar.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('ca-archivo').click(); }
+      });
+      cont.appendChild(agregar);
+    }
+  }
+
+  function guardarCarrusel(lista, mensaje) {
+    return api('PUT', '/api/carrusel', { imagenes: lista }).then(function (r) {
+      carrusel = r.imagenes;
+      pintarCarrusel();
+      if (mensaje) aviso('carrusel-aviso', mensaje + '. Ya se ve en la tienda.', true);
+    }).catch(function (e) {
+      aviso('carrusel-aviso', e.message);
+      pintarCarrusel();
+    });
+  }
+
+  function moverCarrusel(i, delta) {
+    var j = i + delta;
+    if (j < 0 || j >= carrusel.length) return;
+    var nueva = carrusel.slice();
+    var f = nueva.splice(i, 1)[0];
+    nueva.splice(j, 0, f);
+    guardarCarrusel(nueva, 'Orden cambiado');
+  }
+
+  function agregarAlCarrusel(archivos) {
+    if (carruselOcupado) return;
+    var lista = Array.prototype.slice.call(archivos);
+    var lugar = MAX_CARRUSEL - carrusel.length;
+    if (!lista.length) return;
+    var recortado = lista.length > lugar;
+    lista = lista.slice(0, Math.max(lugar, 0));
+    carruselOcupado = true;
+    var nuevas = [];
+    var error = '';
+    aviso('carrusel-aviso', 'Subiendo ' + (lista.length === 1 ? 'la imagen' : lista.length + ' imágenes') + '...', true);
+    lista.reduce(function (cadena, archivo) {
+      return cadena.then(function () {
+        return prepararImagen(archivo, 1920).then(function (dataUrl) {
+          return api('POST', '/api/imagenes', { datos: dataUrl });
+        }).then(function (r) { nuevas.push(r.url); }).catch(function (e) { error = e.message; });
+      });
+    }, Promise.resolve()).then(function () {
+      if (!nuevas.length) { aviso('carrusel-aviso', error || 'No se pudo subir la imagen.'); return; }
+      return guardarCarrusel(carrusel.concat(nuevas), nuevas.length === 1 ? 'Imagen agregada' : nuevas.length + ' imágenes agregadas').then(function () {
+        if (error) aviso('carrusel-aviso', 'Una imagen no se pudo subir: ' + error);
+        else if (recortado) aviso('carrusel-aviso', 'Máximo ' + MAX_CARRUSEL + ' imágenes: se agregaron solo las que entraban.');
+      });
+    }).then(function () { carruselOcupado = false; });
+  }
+
   function cargarConfig() {
     return api('GET', '/api/config').then(function (c) {
+      carrusel = Array.isArray(c.carrusel) ? c.carrusel : [];
+      pintarCarrusel();
       CAMPOS_CONFIG.forEach(function (k) { $('cf-' + k).value = c[k] || ''; });
     }).catch(function (e) { tostada(e.message); });
   }
@@ -836,6 +927,10 @@
     });
     $('form-categoria').addEventListener('submit', agregarCategoriaDesdePestana);
     $('form-config').addEventListener('submit', guardarConfig);
+    $('ca-archivo').addEventListener('change', function (e) {
+      agregarAlCarrusel(e.target.files || []);
+      e.target.value = '';
+    });
     $('form-usuario').addEventListener('submit', crearUsuario);
     $('form-password').addEventListener('submit', cambiarPassword);
 

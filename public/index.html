@@ -37,14 +37,26 @@
 </header>
 
 <main>
-  <section class="portada">
-    <div class="contenedor">
-      <div>
-        <h1 id="hero-titulo">Camisetas de fútbol y ropa deportiva</h1>
-        <p id="hero-texto">Elegí tu camiseta, tu talle y hacé el pedido por WhatsApp.</p>
-        <a class="btn btn-claro" href="#catalogo">Ver catálogo</a>
+  <section class="portada" id="portada" aria-roledescription="carrusel" aria-label="Portada">
+    <div class="diapo activa" id="diapo-inicio">
+      <div class="contenedor">
+        <div>
+          <h1 id="hero-titulo">Camisetas de fútbol y ropa deportiva</h1>
+          <p id="hero-texto">Elegí tu camiseta, tu talle y hacé el pedido por WhatsApp.</p>
+          <a class="btn btn-claro" href="#catalogo">Ver catálogo</a>
+        </div>
+        <img class="portada-logo" src="/img/logo.svg" alt="" width="480" height="359">
       </div>
-      <img class="portada-logo" src="/img/logo.svg" alt="" width="480" height="359">
+    </div>
+    <div id="diapos-extra"></div>
+    <div class="carrusel-controles" id="carrusel-controles" hidden>
+      <button class="carrusel-flecha" type="button" id="carrusel-anterior" aria-label="Imagen anterior">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="carrusel-puntos" id="carrusel-puntos"></div>
+      <button class="carrusel-flecha" type="button" id="carrusel-siguiente" aria-label="Imagen siguiente">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
     </div>
   </section>
 

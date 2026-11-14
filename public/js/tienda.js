@@ -456,8 +456,91 @@
 
   /* ---------- Configuracion del negocio ---------- */
 
+  /* ---------- Carrusel de la portada ---------- */
+
+  var carrusel = { total: 1, actual: 0, reloj: null, pausado: false };
+
+  function diapos() { return document.querySelectorAll('#portada .diapo'); }
+
+  function mostrarDiapo(i) {
+    var lista = diapos();
+    carrusel.actual = (i + lista.length) % lista.length;
+    Array.prototype.forEach.call(lista, function (d, k) {
+      var activa = k === carrusel.actual;
+      d.classList.toggle('activa', activa);
+      d.setAttribute('aria-hidden', String(!activa));
+      // los enlaces de una diapositiva oculta no deben recibir el foco
+      Array.prototype.forEach.call(d.querySelectorAll('a, button'), function (el) { el.tabIndex = activa ? 0 : -1; });
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.carrusel-punto'), function (p, k) {
+      p.setAttribute('aria-current', String(k === carrusel.actual));
+    });
+  }
+
+  function programarCarrusel() {
+    clearInterval(carrusel.reloj);
+    carrusel.reloj = null;
+    var sinMovimiento = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (carrusel.total < 2 || carrusel.pausado || document.hidden || sinMovimiento) return;
+    carrusel.reloj = setInterval(function () { mostrarDiapo(carrusel.actual + 1); }, 5000);
+  }
+
+  function irADiapo(i) { mostrarDiapo(i); programarCarrusel(); } // reinicia los 5 segundos
+
+  function armarCarrusel(imagenes) {
+    var cont = $('diapos-extra');
+    var puntos = $('carrusel-puntos');
+    cont.textContent = '';
+    puntos.textContent = '';
+    (imagenes || []).forEach(function (url, i) {
+      var img = crear('img', { src: url, alt: '', loading: i === 0 ? 'eager' : 'lazy' });
+      var d = crear('div', { clase: 'diapo diapo-img', role: 'group', 'aria-label': 'Imagen ' + (i + 1) + ' de la portada' }, [img]);
+      // si una imagen no carga, se quita del carrusel
+      img.addEventListener('error', function () { d.remove(); prepararControles(); });
+      cont.appendChild(d);
+    });
+    prepararControles();
+  }
+
+  function prepararControles() {
+    var lista = diapos();
+    var puntos = $('carrusel-puntos');
+    puntos.textContent = '';
+    carrusel.total = lista.length;
+    $('carrusel-controles').hidden = carrusel.total < 2;
+    Array.prototype.forEach.call(lista, function (d, k) {
+      var b = crear('button', { type: 'button', clase: 'carrusel-punto', 'aria-label': 'Ir a la imagen ' + (k + 1) + ' de ' + lista.length });
+      b.addEventListener('click', function () { irADiapo(k); });
+      puntos.appendChild(b);
+    });
+    mostrarDiapo(Math.min(carrusel.actual, carrusel.total - 1));
+    programarCarrusel();
+  }
+
+  function iniciarCarrusel() {
+    var portada = $('portada');
+    $('carrusel-anterior').addEventListener('click', function () { irADiapo(carrusel.actual - 1); });
+    $('carrusel-siguiente').addEventListener('click', function () { irADiapo(carrusel.actual + 1); });
+    // se detiene mientras el mouse o el teclado estan sobre la portada, o la pestaña no se ve
+    function pausar(v) { carrusel.pausado = v; programarCarrusel(); }
+    portada.addEventListener('mouseenter', function () { pausar(true); });
+    portada.addEventListener('mouseleave', function () { pausar(false); });
+    portada.addEventListener('focusin', function () { pausar(true); });
+    portada.addEventListener('focusout', function () { pausar(false); });
+    document.addEventListener('visibilitychange', programarCarrusel);
+    var inicioX = null;
+    portada.addEventListener('touchstart', function (e) { inicioX = e.touches[0].clientX; }, { passive: true });
+    portada.addEventListener('touchend', function (e) {
+      if (inicioX === null) return;
+      var dx = e.changedTouches[0].clientX - inicioX;
+      inicioX = null;
+      if (Math.abs(dx) > 40 && carrusel.total > 1) irADiapo(carrusel.actual + (dx < 0 ? 1 : -1));
+    });
+  }
+
   function aplicarConfig() {
     var c = estado.config;
+    armarCarrusel(c.carrusel);
     if (c.heroTitulo) $('hero-titulo').textContent = c.heroTitulo;
     if (c.heroTexto) $('hero-texto').textContent = c.heroTexto;
     $('texto-envios').textContent = c.envios || '';
@@ -515,6 +598,7 @@
     $('p-mas').addEventListener('click', function () { estado.cantidad++; pintarDetalle(); });
     $('p-agregar').addEventListener('click', agregarAlCarrito);
 
+    iniciarCarrusel();
     $('abrir-carrito').addEventListener('click', abrirCarrito);
     $('cerrar-carrito').addEventListener('click', cerrarCarrito);
     $('velo').addEventListener('click', cerrarCarrito);

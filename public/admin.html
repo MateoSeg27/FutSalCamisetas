@@ -165,8 +165,17 @@
           </div>
           <button class="btn" type="submit" id="cf-guardar">Guardar cambios</button>
         </form>
+
+        <div class="caja">
+          <h3>Carrusel de la portada <span class="tenue" id="ca-cuenta">(0 de 8)</span></h3>
+          <div class="aviso" id="carrusel-aviso" role="status" hidden></div>
+          <p class="tenue" style="margin-bottom:12px">La portada con el título y el logo siempre es la primera. Las imágenes que agregues acá pasan después, una cada 5 segundos, en este orden. Quedan mejor si son horizontales (por ejemplo 1920 × 600). Los cambios se guardan solos.</p>
+          <div class="galeria-editor carrusel-editor" id="ca-fotos"></div>
+          <input type="file" id="ca-archivo" accept="image/jpeg,image/png,image/webp" multiple class="oculto-visual">
+        </div>
       </section>
 
+      <!-- (el carrusel esta dentro de Datos del negocio) -->
       <!-- Usuarios (solo administrador) -->
       <section id="sec-usuarios" hidden>
         <div class="panel-cab"><h2>Usuarios del panel</h2></div>

@@ -23,6 +23,7 @@ const SESSION_MS = 7 * 24 * 60 * 60 * 1000;   // 7 dias
 const MAX_JSON_BYTES = 100 * 1024;            // 100 KB para datos normales
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;     // 8 MB para subir imagenes
 const MAX_IMAGENES = 5;                       // fotos por producto
+const MAX_CARRUSEL = 8;                       // imagenes del carrusel de la portada
 
 /* ------------------------------------------------------------------ */
 /* Almacenamiento                                                      */
@@ -604,8 +605,29 @@ async function manejarApi(req, res, ruta) {
       heroTexto: texto(data.heroTexto, 400, 'el texto de portada', false),
       envios: texto(data.envios, 400, 'el texto de envíos', false),
     };
+    // el carrusel se guarda aparte (PUT /api/carrusel): aca se conserva
+    const anterior = (await almacen.obtenerConfig()) || {};
+    config.carrusel = Array.isArray(anterior.carrusel) ? anterior.carrusel : [];
     await almacen.guardarConfig(config);
     return enviarJson(res, 200, config);
+  }
+
+  if (recurso === 'carrusel' && metodo === 'PUT' && !id) {
+    await exigirSesion(req);
+    const data = await leerJson(req, MAX_JSON_BYTES);
+    if (!Array.isArray(data.imagenes)) throw new ErrorHttp(400, 'Las imágenes no son válidas.');
+    if (data.imagenes.length > MAX_CARRUSEL) throw new ErrorHttp(400, 'Máximo ' + MAX_CARRUSEL + ' imágenes en el carrusel.');
+    const imagenes = data.imagenes.map((i) => texto(i, 300, 'la imagen', true));
+    if (!imagenes.every((i) => i.startsWith(almacen.prefijoImagenes) && imagenValida(i))) {
+      throw new ErrorHttp(400, 'Alguna de las imágenes no es válida.');
+    }
+    if (new Set(imagenes).size !== imagenes.length) throw new ErrorHttp(400, 'Hay una imagen repetida.');
+    const config = Object.assign({}, CONFIG_INICIAL, (await almacen.obtenerConfig()) || {});
+    const anteriores = Array.isArray(config.carrusel) ? config.carrusel : [];
+    config.carrusel = imagenes;
+    await almacen.guardarConfig(config);
+    await borrarImagenesQuitadas(anteriores, imagenes);
+    return enviarJson(res, 200, { imagenes });
   }
 
   if (recurso === 'clientes' && metodo === 'GET' && !id) {
